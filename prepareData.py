@@ -56,6 +56,7 @@ def readPDNA224():
         sequencesFlag, sitesFlag = False, False
         for line in fr:
             line = line.replace("\n","")
+            line = line.replace("\x0c","")
             if 'The sequences of PDNA-224' in line:
                 sequencesFlag = True
                 continue
@@ -93,20 +94,20 @@ def getTrainingDataset(pseqs:dict, psites:dict, windown_wise:int):
         site = psites[key]
         n = len(seq)
         for i in range(n):
-            start = i - windown_wise
-            end = i + windown_wise
+            start = i- windown_wise
+            end = i + windown_wise+1
             if start < 0:
                 start = 0
             if end > n-1:
                 end = n
             seqseg = seq[start:end]
-            if i in site:
+            if i+1 in site:
                 posseqs.append(seqseg)
             else:
                 negseqs.append(seqseg)
     return posseqs, negseqs
 
-#pseqs, psites = readPDNA62()                
-#posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
-pseqs, psites = readPDNA224()
-posseqs, negseqs = getTrainingDataset(pseqs,psites,11)
+pseqs, psites = readPDNA62()                
+posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
+#pseqs, psites = readPDNA224()
+#posseqs, negseqs = getTrainingDataset(pseqs,psites,11)
