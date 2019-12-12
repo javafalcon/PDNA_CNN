@@ -9,28 +9,22 @@ def readPDNA62():
     pdna_seqs_62 = {}
     pdna_sites_62 = {}
     with open(r'PDNA_Data\Supplementary_data_S3_010913.doc','r',encoding='ISO-8859-1') as fr:
-        n = 0
-        lseq = []
         key = ""
-        lsite = []
         start = False
         for line in fr:
             line = line.strip("\n")
-            if line.startswith(r'.end'):
+            if line.startswith('.end'):
                 break
             if line.startswith(r'.\lab'):
                 start = True
-                n += 1
-                if n > 1:
-                    pdna_seqs_62[key] = "".join(lseq)
-                    pdna_sites_62[key] = lsite
-                    lseq = []
-                    lsite = []
                 ls = line.split(" ")
                 label = ls[0].split("\\")
                 label = label[2]
                 k = label.rindex(".",0,-1) 
                 key = label[:k]
+                print(key)
+                pdna_seqs_62[key] = []
+                pdna_sites_62[key] = []
             elif start:
                 ls = line.split(" ")
                 ind = 1
@@ -41,12 +35,13 @@ def readPDNA62():
                             nsite = int(s)
                         elif ind == 2:
                             aa = s
+                        elif ind == 4:
+                            sign = s
+                            break
                         ind += 1
-                if ls[0] == '-':
-                    lsite.append( nsite)
-                lseq.append(aa)
-        pdna_seqs_62[key] = "".join(lseq)
-        pdna_sites_62[key] = lsite
+                if sign == '1':
+                   pdna_sites_62[key].append(nsite)
+                pdna_seqs_62[key].append(aa) 
     return pdna_seqs_62, pdna_sites_62
 
 def readPDNA224():
@@ -108,6 +103,6 @@ def getTrainingDataset(pseqs:dict, psites:dict, windown_wise:int):
     return posseqs, negseqs
 
 pseqs, psites = readPDNA62()                
-posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
+#posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
 #pseqs, psites = readPDNA224()
 #posseqs, negseqs = getTrainingDataset(pseqs,psites,11)
