@@ -4,6 +4,10 @@ Created on Mon Dec  9 12:57:47 2019
 
 @author: Administrator
 """
+import numpy as np
+from tools import aa2code
+import re
+from sklearn.utils import shuffle
 # 处理PDNA-62数据集
 def readPDNA62():
     pdna_seqs_62 = {}
@@ -102,7 +106,55 @@ def getTrainingDataset(pseqs:dict, psites:dict, windown_wise:int):
                 negseqs.append(seqseg)
     return posseqs, negseqs
 
-pseqs, psites = readPDNA62()                
+
+def chaosGraph_codes(naseq, width=32, hight=32):
+    g = np.zeros(shape=(width, hight))
+    i,j = width//2, hight//2
+    for c in naseq:
+        if c == 'U':
+            x,y = 0,0
+        elif c == 'C':
+            x,y = width,0
+        elif c == 'A':
+            x,y = width, hight
+        elif c == 'G':
+            x,y = 0,hight
+            
+        tx, ty = (i + x)//2, (j + y)//2
+        g[tx,ty] = g[tx,ty] + 1
+        i,j = tx,ty
+    return g
+
+def aaseq2naseq(seq):
+    seq = seq.upper()
+    seq = re.sub('[XZUB]','',seq)
+    seq = seq.strip()
+    naseq = ""
+    for c in seq:
+        naseq += aa2code(c) 
+    return naseq
+
+def genEnlargedData(pseqs, nseqs, num_enlarg=0):
+    X,y = [],[]
+    if num_enlarg == 0:
+        num_enlarg = len(nseqs)//len(pseqs)
+    for seq in pseqs:
+        for k in range(num_enlarg):
+            naseq = aaseq2naseq(seq)
+            X.append(chaosGraph_codes(naseq))
+            y.append([1,0])
+    for seq in nseqs:
+        naseq = aaseq2naseq(seq)
+        X.append(chaosGraph_codes(naseq))
+        y.append([0,1])
+    X,y = np.array(X), np.array(y)
+    X,y = shuffle(X, y)
+    return X,y
+
+#pseqs, psites = readPDNA62()                
 #posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
 #pseqs, psites = readPDNA224()
 #posseqs, negseqs = getTrainingDataset(pseqs,psites,11)
+
+      
+
