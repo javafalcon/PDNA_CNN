@@ -7,15 +7,15 @@ Created on Thu Dec 26 10:37:39 2019
 
 from configparser import ConfigParser
 from semisupLearner_keras import displayMetrics
-from semisupLearner_keras import sup_loss, SemisupLearner
-from nets import semiSL2Dnet, sL2Dnet
+from semisupLearner_keras import SemisupLearner
+from nets import semiSL2Dnet
 from prepareData import readPDNA224, getTrainingDataset, genEnlargedData,protsFormulateByXiaoInfoCode
 from sklearn.utils import shuffle
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 from sklearn.model_selection import KFold
 import numpy as np
 import os
-import keras
+
 
 def readConfParam():
     conf = ConfigParser()
