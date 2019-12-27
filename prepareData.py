@@ -8,16 +8,8 @@ import numpy as np
 from tools import aa2code
 import re
 from sklearn.utils import shuffle
-
-# Use digital codeing for aa 
-# Ref: Xiao,X. et al, 2004, Digital coding for amino acid based on cellular automata
-XiaoInfoCode={'A':'11001','C':'01111','D':'11100','E':'11101',
-          'F':'01011','G':'11110','H':'00101','I':'10010',
-          'K':'10100','L':'00011','M':'10011','N':'10101',
-          'P':'00001','Q':'00100','R':'00110','S':'01001',
-          'T':'10000','V':'11010','W':'01110','Y':'01100',
-          'X':'00000'}
-# 处理PDNA-62数据集
+from sklearn.model_selection import KFold
+# 读入PDNA-62数据集.返回蛋白质序列及其dna结合位点在序列中的序号（从1开始计数）
 def readPDNA62():
     pdna_seqs_62 = {}
     pdna_sites_62 = {}
@@ -57,6 +49,10 @@ def readPDNA62():
                 pdna_seqs_62[key].append(aa) 
     return pdna_seqs_62, pdna_sites_62
 
+# 读入PDNA-224数据。返回蛋白质序列及其dna结合位点在序列中的序号（从1开始计数）
+# 返回两个字典。
+# pdna_seqs_224  序列字典, key：蛋白质id  value: 蛋白质序列
+# pdna_sites_224 结合位点字典, key：蛋白质id  value:位点序号组成的列表
 def readPDNA224():
     pdna_seqs_224 = {}
     pdna_sites_224 = {}
@@ -93,8 +89,14 @@ def readPDNA224():
                         except ValueError:
                             break
     return pdna_seqs_224, pdna_sites_224
-              
-def getTrainingDataset(pseqs:dict, psites:dict, windown_wise:int):
+
+# 对蛋白质序列进行滑窗，生成正样本和负样本。滑窗尺寸为ws，一个氨基酸左右各取ws个氨基酸，
+# 构成一个长度为2*ws+1的肽链，如果中间的氨基酸是与DNA结合的位点，则该序列为正样本
+# 否则为负样本。如果氨基酸前后不足ws个残基，则补‘#’       
+# 保存滑窗结果到posseqs和negseqs两个列表对象，并保存到npz格式文件中：
+# posseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列
+# negseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列       
+def buildBenchmarkDataset(pseqs:dict, psites:dict, windown_wise:int, npzfile):
     keys = pseqs.keys()
     posseqs, negseqs = [], []
     for key in keys:
@@ -118,181 +120,37 @@ def getTrainingDataset(pseqs:dict, psites:dict, windown_wise:int):
                 posseqs.append(seqseg)
             else:
                 negseqs.append(seqseg)
-    return posseqs, negseqs
+    #return posseqs, negseqs
+    np.savez(npzfile, pos=posseqs, neg=negseqs)
 
+# 构建用于交叉验证的训练集和测试集序列样本
+def generateKFBenchmarkDataset(posseqs:list, negseqs:list, npzfile, kf=5):
+    X_train_pos_ls, X_test_pos_ls = [], []
+    kf = KFold(n_splits=kf)
+    for train_index, test_index in kf.split(posseqs):
+        X_train_pos, X_test_pos = [], []
+        for k in train_index:
+            X_train_pos.append(posseqs[k])
+        for j in test_index:
+            X_test_pos.append(posseqs[j])
+        
+        X_train_pos_ls.append(X_train_pos)
+        X_test_pos_ls.append(X_test_pos)
 
-def naChaosGraph_codes(naseq, width=32, hight=32):
-    g = np.zeros(shape=(width, hight))
-    i,j = width//2, hight//2
-    for c in naseq:
-        if c == 'U':
-            x,y = 0,0
-        elif c == 'C':
-            x,y = width,0
-        elif c == 'A':
-            x,y = width, hight
-        elif c == 'G':
-            x,y = 0,hight
+    X_train_neg_ls, X_test_neg_ls = [], []
+    for train_index, test_index in kf.split(negseqs):
+        X_train_neg, X_test_neg = [], []
+        for k in train_index:
+            X_train_neg.append(negseqs[k])
+        for j in test_index:
+            X_test_neg.append(negseqs[j])
             
-        tx, ty = (i + x)//2, (j + y)//2
-        g[tx,ty] = g[tx,ty] + 1
-        i,j = tx,ty
-    return g
-
-def naChaosGraphVector(naseq, width=1., hight=1.):
-    n = len(naseq)
-    g = np.zeros(shape=(n,2))
+        X_train_neg_ls.append(X_train_neg)
+        X_test_neg_ls.append(X_test_neg)
     
-    i,j = width/2, hight/2
-    for k in range(n):
-        c = naseq[k]
-        if c == 'U':
-            x,y = 0,0
-        elif c == 'C':
-            x,y = width,0
-        elif c == 'A':
-            x,y = width, hight
-        elif c == 'G':
-            x,y = 0,hight
-        else:
-            x,y = width/2, hight/2
-        tx, ty = (i + x)/2, (j + y)/2
-        g[k][0], g[k][1] = tx, ty
-    return g
+    #return (X_train_pos_ls, X_test_pos_ls), (X_train_neg_ls, X_test_neg_ls)
+    np.savez(npzfile, trainPos=X_train_pos_ls, trainNeg=X_train_neg_ls, 
+             testPos=X_test_pos_ls, testNeg=X_test_neg_ls)
 
-def aaseq2naseq(seq):
-    seq = seq.upper()
-    seq = re.sub('[ZUB]','',seq)
-    seq = seq.strip()
-    naseq = ""
-    for c in seq:
-        naseq += aa2code(c) 
-    return naseq
-
-def protXiaoInfoCode(seq):
-    m = []
-    for aa in seq:
-        al = []
-        for c in XiaoInfoCode[aa]:
-            al.append(eval(c))
-        m.append(al)
-    return np.array(m)
-
-
-def genEnlargedData(pseqs, nseqs, num_enlarg=0):
-    X,y = [],[]
-    if num_enlarg == 0:
-        num_enlarg = len(nseqs)//len(pseqs)
-    for seq in pseqs:
-        for k in range(num_enlarg):
-            naseq = aaseq2naseq(seq)
-            X.append(naChaosGraphVector(naseq))
-            y.append([0.,1.])
-    for seq in nseqs:
-        naseq = aaseq2naseq(seq)
-        X.append(naChaosGraphVector(naseq))
-        y.append([1.,0.])
-    X,y = np.array(X), np.array(y)
-    X,y = shuffle(X, y)
-    return X,y
-
-# hot code by depentence with previous amino acids
-def protDepHotCode(seq):
-    aas = "ACDEFHIGKLMNQPRSTVWYX"
-    x = np.zeros(shape=(len(seq), 21))
-    for i in range(len(seq)):
-        if seq[i] == '#':
-                x[i] = np.ones(shape=(21,))*0.05
-        else:
-            for j in range(21):  
-                k,d = -1,0.
-                while True:
-                    try:
-                        k = seq[:i+1].index(aas[j],k+1)
-                        d += 2**(k-i)
-                    except:
-                        break
-                x[i,j] = d 
-    return x
-
-def protOneHotCode(seq):
-    aas = "ACDEFHIGKLMNQPRSTVWYX"
-    x = np.zeros(shape=(len(seq), 21))
-    for i in range(len(seq)):
-        if seq[i] == '#':
-                x[i] = np.ones(shape=(21,))/21
-        else:
-            t = np.zeros((21,))
-            t[aas.index(seq[i])]=1
-            x[i] = t
-    return x
-# hot code by migrating model
-def protMigratedCode(seq):
-    aas = "ACDEFHIGKLMNQPRSTVWYX"
-    x = np.zeros(shape=(len(seq), 22))
-    v = np.zeros(shape=(22,))
-    for i in range(len(seq)):
-        if seq[i] == '#':
-                x[i] = np.zeros(shape=(22,))
-                x[i,21] = 1 
-        else:
-            j = aas.index(seq[i])
-            t = np.zeros(shape=(22,))
-            t[j] = 1
-            if i == 0:
-                x[i] = (t + v)/2
-            else:
-                x[i] = (x[i-1] + t)/2
-            x[i,21] = 0
-    return x
-
-
-# hot code by migrating model
-def protMigratedCode2(seq):    
-    x = np.zeros(shape=(len(seq), 6))
-    v = np.ones(shape=(5,)) * 0.5
-    for i in range(len(seq)):
-        if seq[i] == '#':
-                x[i] = np.zeros(shape=(6,))
-                x[i,5] = 1 
-        else:
-            t = []
-            for c in XiaoInfoCode[seq[i]]:
-                t.append(eval(c))
-            t = np.array(t, dtype=float)
-            
-            if i == 0:
-                x[i,:5] = (v + t)/2
-            else:
-                x[i,:5] = (x[i-1,:5] + t)/2
-            x[i,5] = 0
-    return x 
-   
-def protsFormulateByChaosCode(lsseq):
-    X = []
-    for seq in lsseq:
-        X.append( protMigratedCode(seq))
-    return np.array(X)
-
-def protsFormulateByXiaoInfoCode(lsseq):
-    X = []
-    for seq in lsseq:
-        X.append( protMigratedCode2(seq))
-    return np.array(X)
-
-def protsFormulateByOneHotCode(lsseq):
-    X = []
-    for seq in lsseq:
-        X.append( protOneHotCode(seq))
-    return np.array(X)
-#pseqs, psites = readPDNA62()                
-#posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
-#pseqs, psites = readPDNA224()
-#posseqs, negseqs = getTrainingDataset(pseqs,psites,11)
-"""seq = 'MKLAAHLPH'
-seq2 = 'KLAAHLPHQ'
-M = protMigratedCode(seq)
-M2 = protMigratedCode(seq2)
-"""
-      
-
+benchData = np.load('PDNA_224_11.npz')
+generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset.npz')
