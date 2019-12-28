@@ -152,5 +152,6 @@ def generateKFBenchmarkDataset(posseqs:list, negseqs:list, npzfile, kf=5):
     np.savez(npzfile, trainPos=X_train_pos_ls, trainNeg=X_train_neg_ls, 
              testPos=X_test_pos_ls, testNeg=X_test_neg_ls)
 
-benchData = np.load('PDNA_224_11.npz')
-generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset.npz')
+if __name__ == "__main__":
+    benchData = np.load('PDNA_224_11.npz')
+    generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset.npz')  

@@ -9,7 +9,6 @@ from configparser import ConfigParser
 from semisupLearner_keras import displayMetrics
 from semisupLearner_keras import SemisupLearner
 from nets import semiSL2Dnet
-from prepareData import readPDNA224, getTrainingDataset, genEnlargedData,protsFormulateByXiaoInfoCode
 from sklearn.utils import shuffle
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 from sklearn.model_selection import KFold
@@ -68,41 +67,35 @@ def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsF
 
     return pred_prob
 
-def splitDataKF(ws,Kf=5):
-    if os.path.exists('pdna_224_11.npz'):
-        data = np.load('pdna_224_11.npz')
-        posseqs = data['pos']
-        negseqs = data['neg']
-    else:
-        pseqs, psites = readPDNA224()
-        posseqs, negseqs = getTrainingDataset(pseqs,psites,ws)
-        np.savez('pdna_224_11.npz', pos=posseqs, neg=negseqs)
+def load_data():
+    from formulate import protsFormulateByXiaoInfoCode, protsFormulateByOneHotCode, protsFormulateByPhychemCode
+    data = np.load('KfBenchmarkDataset.npz')
+    train_posseq_ls, train_negseq_ls = data['trainPos'], data['trainNeg']
+    test_posseq_ls, test_negseq_ls = data['testPos'], data['testNeg']
     
-    X_train_pos_ls, X_test_pos_ls = [], []
-    kf = KFold(n_splits=Kf)
-    for train_index, test_index in kf.split(posseqs):
-        X_train_pos, X_test_pos = [], []
-        for k in train_index:
-            X_train_pos.append(posseqs[k])
-        for j in test_index:
-            X_test_pos.append(posseqs[j])
-        
-        X_train_pos_ls.append(X_train_pos)
-        X_test_pos_ls.append(X_test_pos)
-
-    X_train_neg_ls, X_test_neg_ls = [], []
-    for train_index, test_index in kf.split(negseqs):
-        X_train_neg, X_test_neg = [], []
-        for k in train_index:
-            X_train_neg.append(negseqs[k])
-        for j in test_index:
-            X_test_neg.append(negseqs[j])
+    x_train_pos, x_train_neg = [], []
+    x_test_pos, x_test_neg = [], []
+    for k in range(5):
+        xix = protsFormulateByXiaoInfoCode(train_posseq_ls[k])
+        ohx = protsFormulateByOneHotCode(train_posseq_ls[k])
+        pcx = protsFormulateByPhychemCode(train_posseq_ls[k])
+        # 连结三种编码，每个氨基酸编码为34维向量，最后一列是标识是否为填充列
+        x_train_pos.append( np.concatenate((xix[:-1],ohx[:-1],pcx)))
             
-        X_train_neg_ls.append(X_train_neg)
-        X_test_neg_ls.append(X_test_neg)
-    
-    return (X_train_pos_ls, X_test_pos_ls), (X_train_neg_ls, X_test_neg_ls)
-
+        xix = protsFormulateByXiaoInfoCode(train_negseq_ls[k])
+        ohx = protsFormulateByOneHotCode(train_negseq_ls[k])
+        pcx = protsFormulateByPhychemCode(train_negseq_ls[k])
+        x_train_neg.append( np.concatenate((xix[:-1],ohx[:-1],pcx)))
+        
+        xix = protsFormulateByXiaoInfoCode(test_posseq_ls[k])
+        ohx = protsFormulateByOneHotCode(test_posseq_ls[k])
+        pcx = protsFormulateByPhychemCode(test_posseq_ls[k])
+        x_test_pos.append( np.concatenate((xix[:-1],ohx[:-1],pcx)))
+        
+        xix = protsFormulateByXiaoInfoCode(test_negseq_ls[k])
+        ohx = protsFormulateByOneHotCode(test_negseq_ls[k])
+        pcx = protsFormulateByPhychemCode(test_negseq_ls[k])
+        x_test_pos.append( np.concatenate((xix[:-1],ohx[:-1],pcx)))
 def ssl2Dpredictor():
     confParam = readConfParam()
     num_classes = confParam['num_classes']

@@ -21,11 +21,11 @@ from keras.regularizers import l2
 def semiSL2Dnet(shape,num_classes):
     l2value = 0.001
     x_input = Input(shape=shape,name="main_input")
-    conv1 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input) 
+    conv1 = Conv2D(32,(3,1),padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input) 
     
-    conv2 = Conv2D(64,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv1)               
+    conv2 = Conv2D(64,(1,3),padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv1)               
     
-    conv3 = Conv2D(100,6,padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv2) 
+    conv3 = Conv2D(100,5,padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv2) 
     
     pool1 = MaxPooling2D(2)(conv3)
     
@@ -41,7 +41,7 @@ def semiSL2Dnet(shape,num_classes):
     x_a = dense_1(x_a)
     x_b = dense_1(x_b)
     
-    drop_3 = Dropout(0.5,name="unsupLayer")
+    drop_3 = Dropout(0.3, name="unsupLayer")
     x_a = drop_3(x_a)
     x_b = drop_3(x_b)
     
@@ -74,11 +74,7 @@ def semiSL2Dnet2(shape,num_classes):
     
     return model
                     
-                    
-                    
-                    
-                    
-                    
+
                     
                     
                     

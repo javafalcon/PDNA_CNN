@@ -4,7 +4,7 @@ Created on Fri Dec 27 20:58:57 2019
 
 @author: falcon1
 """
-from  AminoAcidCodes import *
+from  AminoAcidCode import *
 import numpy as np
 
 def naChaosGraph_codes(naseq, width=32, hight=32):
@@ -161,7 +161,7 @@ def protMigratedXiaoInfoCode(seq):
                 x[i,5] = 1 
         else:
             t = []
-            for c in XiaoInfoCode[seq[i]]:
+            for c in code['XiaoInfoCode'][seq[i]]:
                 t.append(eval(c))
             t = np.array(t, dtype=float)
             
@@ -177,7 +177,7 @@ def protMigratedXiaoInfoCode(seq):
 """    
 def protPhychemCode(seq):
     x = np.zeros(shape=(len(seq), 8))
-    for i in len(seq):
+    for i in range(len(seq)):
         if seq[i] == '#':
             x[i] = np.zeros(shape=(8,))
             x[i,7] = 1
@@ -188,22 +188,28 @@ def protPhychemCode(seq):
     return x
 
 
-def protsFormulateByChaosCode(lsseq):
+def protsFormulateByChaosCode(lsseq:list):
     X = []
     for seq in lsseq:
         X.append( protMigratedCode(seq))
     return np.array(X)
 
-def protsFormulateByXiaoInfoCode(lsseq):
+def protsFormulateByXiaoInfoCode(lsseq:list):
     X = []
     for seq in lsseq:
-        X.append( protMigratedCode2(seq))
+        X.append( protXiaoInfoCode(seq))
     return np.array(X)
 
-def protsFormulateByOneHotCode(lsseq):
+def protsFormulateByOneHotCode(lsseq:list):
     X = []
     for seq in lsseq:
         X.append( protOneHotCode(seq))
+    return np.array(X)
+
+def protsFormulateByPhychemCode(lsseq:list):
+    X = []
+    for seq in lsseq:
+        X.append( protXiaoInfoCode(seq))
     return np.array(X)
 #pseqs, psites = readPDNA62()                
 #posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
