@@ -8,13 +8,13 @@ Created on Thu Dec 26 10:37:39 2019
 from configparser import ConfigParser
 from semisupLearner_keras import displayMetrics
 from semisupLearner_keras import SemisupLearner
-from nets import semiSL2Dnet
+from nets import semiSL2Dnet,supLearnNet
 from sklearn.utils import shuffle, resample
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 from sklearn.model_selection import KFold
 import numpy as np
 import os
-
+from keras import optimizers
 
 def readConfParam():
     conf = ConfigParser()
@@ -62,6 +62,31 @@ def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsF
     ssl.train()
     # predict
     pred_prob = ssl.predict(x_test)
+    # print predicting metrics
+    displayMetrics(y_test, pred_prob, noteInfo, metricsFile) 
+
+    return pred_prob
+
+
+def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile, **confParam):
+    # semi-supervised learning
+    model = supLearnNet((2*confParam['windown_size']+1, confParam['width'], confParam['channels'],), confParam['num_classes']) 
+    #save_dir = confParam['save_dir']
+    batch_size = confParam['batch_size']
+    epochs = confParam['epochs']
+    learning_rate = confParam['learning_rate']
+    #patience = confParam['patience']
+    model.compile(loss= 'categorical_crossentropy', 
+                     optimizer=optimizers.Adam(lr=learning_rate),  
+                     metrics=['accuracy']) 
+    model.fit(x_train,y_train,
+              batch_size=batch_size,
+              epochs=epochs,
+              validation_split=0.1
+              )
+    
+    # predict
+    pred_prob = model.predict(x_test)
     # print predicting metrics
     displayMetrics(y_test, pred_prob, noteInfo, metricsFile) 
 
