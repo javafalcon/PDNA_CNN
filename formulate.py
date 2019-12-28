@@ -77,14 +77,18 @@ def genEnlargedData(pseqs, nseqs, num_enlarg=0):
 
 # 每个氨基酸编码为5位0、1序列。返回len(seq)-by-5的二维数组
 def protXiaoInfoCode(seq):
-    m = []
-    for aa in seq:
-        al = []
-        for c in code['XiaoInfoCode'][aa]:
-            al.append(eval(c))
-        m.append(al)
-    return np.array(m)
-
+    x = np.zeros(shape=(len(seq), 6))
+    for i in range(len(seq)):
+        if seq[i] == '#':
+            x[i] = np.zeros(shape=(6,))
+            x[i,5] = 1
+        else:
+            c = code['XiaoInfoCode'][seq[i]]
+            for k in range(5):
+                x[i,k] = int(c[k])
+            x[i,5] = 0
+        
+    return x
 
 # hot code by depentence with previous amino acids
 def protDepHotCode(seq):
@@ -113,11 +117,12 @@ def protOneHotCode(seq):
     x = np.zeros(shape=(len(seq), 22))
     for i in range(len(seq)):
         if seq[i] == '#':
-                x[i] = np.ones(shape=(21,))/21
-                x[21] = 1
+                x[i,:] = np.zeros(shape=(22,))
+                x[i,21] = 1
         else:
-            t = np.zeros((21,))
+            t = np.zeros((22,))
             t[aas.index(seq[i])]=1
+            t[21] = 0
             x[i] = t
     return x
 
@@ -209,7 +214,7 @@ def protsFormulateByOneHotCode(lsseq:list):
 def protsFormulateByPhychemCode(lsseq:list):
     X = []
     for seq in lsseq:
-        X.append( protXiaoInfoCode(seq))
+        X.append( protPhychemCode(seq))
     return np.array(X)
 #pseqs, psites = readPDNA62()                
 #posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                

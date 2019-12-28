@@ -9,7 +9,7 @@ from configparser import ConfigParser
 from semisupLearner_keras import displayMetrics
 from semisupLearner_keras import SemisupLearner
 from nets import semiSL2Dnet
-from sklearn.utils import shuffle
+from sklearn.utils import shuffle, resample
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 from sklearn.model_selection import KFold
 import numpy as np
@@ -67,49 +67,46 @@ def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsF
 
     return pred_prob
 
-def load_data():
+def load_Kfdata(k):
     from formulate import protsFormulateByXiaoInfoCode, protsFormulateByOneHotCode, protsFormulateByPhychemCode
     data = np.load('KfBenchmarkDataset.npz')
     train_posseq_ls, train_negseq_ls = data['trainPos'], data['trainNeg']
     test_posseq_ls, test_negseq_ls = data['testPos'], data['testNeg']
+       
+    xix = protsFormulateByXiaoInfoCode(train_posseq_ls[k])
+    ohx = protsFormulateByOneHotCode(train_posseq_ls[k])
+    pcx = protsFormulateByPhychemCode(train_posseq_ls[k])
+    # 连结三种编码，每个氨基酸编码为34维向量，最后一列是标识是否为填充列
+    x_train_pos = np.concatenate((xix[:-1],ohx[:-1],pcx))
+        
+    xix = protsFormulateByXiaoInfoCode(train_negseq_ls[k])
+    ohx = protsFormulateByOneHotCode(train_negseq_ls[k])
+    pcx = protsFormulateByPhychemCode(train_negseq_ls[k])
+    x_train_neg = np.concatenate((xix[:-1],ohx[:-1],pcx))
     
-    x_train_pos, x_train_neg = [], []
-    x_test_pos, x_test_neg = [], []
-    for k in range(5):
-        xix = protsFormulateByXiaoInfoCode(train_posseq_ls[k])
-        ohx = protsFormulateByOneHotCode(train_posseq_ls[k])
-        pcx = protsFormulateByPhychemCode(train_posseq_ls[k])
-        # 连结三种编码，每个氨基酸编码为34维向量，最后一列是标识是否为填充列
-        x_train_pos.append( np.concatenate((xix[:-1],ohx[:-1],pcx)))
-            
-        xix = protsFormulateByXiaoInfoCode(train_negseq_ls[k])
-        ohx = protsFormulateByOneHotCode(train_negseq_ls[k])
-        pcx = protsFormulateByPhychemCode(train_negseq_ls[k])
-        x_train_neg.append( np.concatenate((xix[:-1],ohx[:-1],pcx)))
-        
-        xix = protsFormulateByXiaoInfoCode(test_posseq_ls[k])
-        ohx = protsFormulateByOneHotCode(test_posseq_ls[k])
-        pcx = protsFormulateByPhychemCode(test_posseq_ls[k])
-        x_test_pos.append( np.concatenate((xix[:-1],ohx[:-1],pcx)))
-        
-        xix = protsFormulateByXiaoInfoCode(test_negseq_ls[k])
-        ohx = protsFormulateByOneHotCode(test_negseq_ls[k])
-        pcx = protsFormulateByPhychemCode(test_negseq_ls[k])
-        x_test_pos.append( np.concatenate((xix[:-1],ohx[:-1],pcx)))
-def ssl2Dpredictor():
+    xix = protsFormulateByXiaoInfoCode(test_posseq_ls[k])
+    ohx = protsFormulateByOneHotCode(test_posseq_ls[k])
+    pcx = protsFormulateByPhychemCode(test_posseq_ls[k])
+    x_test_pos = np.concatenate((xix[:-1],ohx[:-1],pcx))
+    
+    xix = protsFormulateByXiaoInfoCode(test_negseq_ls[k])
+    ohx = protsFormulateByOneHotCode(test_negseq_ls[k])
+    pcx = protsFormulateByPhychemCode(test_negseq_ls[k])
+    x_test_neg = np.concatenate((xix[:-1],ohx[:-1],pcx))
+    
+    return x_train_pos, x_train_neg, x_test_pos, x_test_neg
+    
+# 集成。M:神经网络个数, r:样本抽样比例, f:特征个数     
+def ensmbSSL2Dpredictor(M, rate_samples, num_features):
     confParam = readConfParam()
     num_classes = confParam['num_classes']
     ws = confParam['windown_size']
     width = confParam['width']
     channels = confParam['channels']
-    (X_train_pos_ls, X_test_pos_ls), (X_train_neg_ls, X_test_neg_ls) = splitDataKF(ws=confParam['windown_size'])
+       
     y_pred, y_targ = np.zeros((0,2)), np.zeros((0,2))
     for i in range(5):
-        # formulate protein seqs
-        x_train_pos = protsFormulateByXiaoInfoCode(X_train_pos_ls[i])
-        x_test_pos = protsFormulateByXiaoInfoCode(X_test_pos_ls[i])
-        x_train_neg = protsFormulateByXiaoInfoCode(X_train_neg_ls[i])
-        x_test_neg = protsFormulateByXiaoInfoCode(X_test_neg_ls[i])
+        x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata(i)
         
         # bulid testing samples set and their labels
         x_test = np.concatenate((x_test_pos, x_test_neg))
@@ -124,29 +121,38 @@ def ssl2Dpredictor():
         y_train_pos[:,1] = 1
         
         # build training samples set and their labels 
-        num_train_pos = x_train_pos.shape[0]
         y_train_neg = np.zeros((len(x_train_neg),num_classes))
-        x_train_neg, y_train_neg = shuffle(x_train_neg, y_train_neg)
-        y_train_neg[:num_train_pos,0] = 1
+        y_train_neg[:,0] = 1
         
-        x_train = np.concatenate((x_train_pos, x_train_neg))
-        y_train = np.concatenate((y_train_pos, y_train_neg))
-        x_train = x_train.reshape(x_train.shape[0],2*ws+1,width,channels)
+        # 生成9个随机特征之空间和随机样本空间，得到训练集，然后集成
+        num_samples = int(x_train_pos.shape[0] * rate_samples)
+        features_indx = list(range(x_train_pos.shape[1]))
+        pred = np.zeros((len(y_test),2))
+        for m in range(M):
+            # 随机取num_train_pos*r个样本
+            x_p, y_p = resample(x_train_pos, y_train_pos, n_samples=num_samples, replace=False)
+            x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=num_samples*2, replace=False)
+            fid = resample(features_indx, n_samples=num_features, replace=False)
+            x = np.concatenate((x_p[:,fid], x_n[:,fid]))
+            y = np.concatenate((y_p, y_n))
+            x = x.reshape(x.shape[0],2*ws+1,width,channels)
         
-        model_name = 'keras_pdna224_trained_5fold_model_{}.h5'.format(i)
-        save_dir = os.path.join(os.getcwd(), confParam['save_dir'])
-        modelFile = os.path.join(save_dir, model_name)
-        noteInfo = '\nOn bechmark dataset, semi-supervised learning predicting result'
-        metricsFile = 'semisup_info.txt'
-
-        pred = semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile, **confParam)
-                        
+            model_name = 'keras_pdna224_trained_5fold_model_{}.h5'.format(i)
+            save_dir = os.path.join(os.getcwd(), confParam['save_dir'])
+            modelFile = os.path.join(save_dir, model_name)
+            noteInfo = '\nOn bechmark dataset, semi-supervised learning predicting result'
+            metricsFile = 'semisup_info.txt'
+    
+            p = semisupLearn(x, y, x_test, y_test, modelFile, noteInfo, metricsFile, **confParam)
+            pred = pred+p
+        
+        pred = pred/M        
         y_t = np.argmax(y_test,-1)
         y_p = np.argmax(pred,-1)
         # metrics the predictor
         print('acc={}'.format(accuracy_score(y_t, y_p)))  
         print('mcc = {}'.format(matthews_corrcoef(y_t, y_p)))
-        
+            
         y_pred = np.concatenate((y_pred, pred))
         y_targ = np.concatenate((y_targ, y_test))  
 
@@ -158,7 +164,7 @@ def ssl2Dpredictor():
     print('mcc = {}'.format(matthews_corrcoef(y_t, y_p)))
 
 if __name__=="__main__":
-    ssl2Dpredictor()
+    ensmbSSL2Dpredictor(30,0.8,6)
 
 
 
