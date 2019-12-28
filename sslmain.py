@@ -77,22 +77,22 @@ def load_Kfdata(k):
     ohx = protsFormulateByOneHotCode(train_posseq_ls[k])
     pcx = protsFormulateByPhychemCode(train_posseq_ls[k])
     # 连结三种编码，每个氨基酸编码为34维向量，最后一列是标识是否为填充列
-    x_train_pos = np.concatenate((xix[:-1],ohx[:-1],pcx))
+    x_train_pos = np.block([xix[:,:,:-1],ohx[:,:,:-1],pcx])
         
     xix = protsFormulateByXiaoInfoCode(train_negseq_ls[k])
     ohx = protsFormulateByOneHotCode(train_negseq_ls[k])
     pcx = protsFormulateByPhychemCode(train_negseq_ls[k])
-    x_train_neg = np.concatenate((xix[:-1],ohx[:-1],pcx))
+    x_train_neg = np.block([xix[:,:,:-1],ohx[:,:,:-1],pcx])
     
     xix = protsFormulateByXiaoInfoCode(test_posseq_ls[k])
     ohx = protsFormulateByOneHotCode(test_posseq_ls[k])
     pcx = protsFormulateByPhychemCode(test_posseq_ls[k])
-    x_test_pos = np.concatenate((xix[:-1],ohx[:-1],pcx))
+    x_test_pos = np.block([xix[:,:,:-1],ohx[:,:,:-1],pcx])
     
     xix = protsFormulateByXiaoInfoCode(test_negseq_ls[k])
     ohx = protsFormulateByOneHotCode(test_negseq_ls[k])
     pcx = protsFormulateByPhychemCode(test_negseq_ls[k])
-    x_test_neg = np.concatenate((xix[:-1],ohx[:-1],pcx))
+    x_test_neg = np.block([xix[:,:,:-1],ohx[:,:,:-1],pcx])
     
     return x_train_pos, x_train_neg, x_test_pos, x_test_neg
     
@@ -110,7 +110,6 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
         
         # bulid testing samples set and their labels
         x_test = np.concatenate((x_test_pos, x_test_neg))
-        x_test = x_test.reshape(x_test.shape[0],2*ws+1,width,channels)
         
         y_test = np.zeros((len(x_test), num_classes))
         y_test[:len(x_test_pos), 1] = 1 #正样本标记
@@ -133,17 +132,19 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
             x_p, y_p = resample(x_train_pos, y_train_pos, n_samples=num_samples, replace=False)
             x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=num_samples*2, replace=False)
             fid = resample(features_indx, n_samples=num_features, replace=False)
-            x = np.concatenate((x_p[:,fid], x_n[:,fid]))
+            x = np.concatenate((x_p[:,:,fid], x_n[:,:,fid]))
             y = np.concatenate((y_p, y_n))
-            x = x.reshape(x.shape[0],2*ws+1,width,channels)
-        
+            x = x.reshape(x.shape[0],x.shape[1],x.shape[2],channels)
+            x_t = x_test[:,:,fid]
+            x_t = x_t.reshape(x_t.shape[0], x_t.shape[1], x_t.shape[2],channels)
+            
             model_name = 'keras_pdna224_trained_5fold_model_{}.h5'.format(i)
             save_dir = os.path.join(os.getcwd(), confParam['save_dir'])
             modelFile = os.path.join(save_dir, model_name)
             noteInfo = '\nOn bechmark dataset, semi-supervised learning predicting result'
             metricsFile = 'semisup_info.txt'
     
-            p = semisupLearn(x, y, x_test, y_test, modelFile, noteInfo, metricsFile, **confParam)
+            p = semisupLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
             pred = pred+p
         
         pred = pred/M        
