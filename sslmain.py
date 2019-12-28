@@ -15,7 +15,7 @@ from sklearn.model_selection import KFold
 import numpy as np
 import os
 from keras import optimizers
-
+from keras import backend as K
 def readConfParam():
     conf = ConfigParser()
     conf.read('conf.ini')
@@ -87,6 +87,9 @@ def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile,
     
     # predict
     pred_prob = model.predict(x_test)
+    K.clear_session()
+    K.tf.reset_default_graph()
+    
     # print predicting metrics
     displayMetrics(y_test, pred_prob, noteInfo, metricsFile) 
 
@@ -153,9 +156,13 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
         features_indx = list(range(x_train_pos.shape[1]))
         pred = np.zeros((len(y_test),2))
         for m in range(M):
-            # 随机取num_train_pos*r个样本
+            # 随机取num_train_pos个正样本
             x_p, y_p = resample(x_train_pos, y_train_pos, n_samples=num_samples, replace=False)
+            
+            # 随机抽取2*num_train_pos个负样本，其中把一半的样本去标签
             x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=num_samples*2, replace=False)
+            y_n[num_samples:,0] = 0
+            
             fid = resample(features_indx, n_samples=num_features, replace=False)
             x = np.concatenate((x_p[:,:,fid], x_n[:,:,fid]))
             y = np.concatenate((y_p, y_n))
