@@ -94,7 +94,7 @@ def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile,
 
 def load_Kfdata(k):
     from formulate import protsFormulateByXiaoInfoCode, protsFormulateByOneHotCode, protsFormulateByPhychemCode
-    data = np.load('KfBenchmarkDataset.npz')
+    data = np.load('KfBenchmarkDataset.npz',allow_pickle=True)
     train_posseq_ls, train_negseq_ls = data['trainPos'], data['trainNeg']
     test_posseq_ls, test_negseq_ls = data['testPos'], data['testNeg']
        
@@ -169,7 +169,8 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
             noteInfo = '\nOn bechmark dataset, semi-supervised learning predicting result'
             metricsFile = 'semisup_info.txt'
     
-            p = semisupLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
+            #p = semisupLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
+            p = supLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
             pred = pred+p
         
         pred = pred/M        
@@ -190,7 +191,7 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
     print('mcc = {}'.format(matthews_corrcoef(y_t, y_p)))
 
 if __name__=="__main__":
-    ensmbSSL2Dpredictor(30,0.8,6)
+    ensmbSSL2Dpredictor(30,0.8,10)
 
 
 
