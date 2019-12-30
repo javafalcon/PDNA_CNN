@@ -95,9 +95,9 @@ def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile,
 
     return pred_prob
 
-def load_Kfdata(k):
+def load_Kfdata(KfBenchmarkDataFile,k):
     from formulate import protsFormulateByXiaoInfoCode, protsFormulateByOneHotCode, protsFormulateByPhychemCode
-    data = np.load('KfBenchmarkDataset.npz')
+    data = np.load(KfBenchmarkDataFile)
     train_posseq_ls, train_negseq_ls = data['trainPos'], data['trainNeg']
     test_posseq_ls, test_negseq_ls = data['testPos'], data['testNeg']
        
@@ -125,7 +125,7 @@ def load_Kfdata(k):
     return x_train_pos, x_train_neg, x_test_pos, x_test_neg
     
 # 集成。M:神经网络个数, r:样本抽样比例, f:特征个数     
-def ensmbSSL2Dpredictor(M, rate_samples, num_features):
+def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
     confParam = readConfParam()
     num_classes = confParam['num_classes']
     ws = confParam['windown_size']
@@ -134,7 +134,7 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
        
     y_pred, y_targ = np.zeros((0,2)), np.zeros((0,2))
     for i in range(5):
-        x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata(i)
+        x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata(KfBenchmarkDataFile, i)
         
         # bulid testing samples set and their labels
         x_test = np.concatenate((x_test_pos, x_test_neg))
@@ -197,7 +197,8 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
     print('mcc = {}'.format(matthews_corrcoef(y_t, y_p)))
 
 if __name__=="__main__":
-    ensmbSSL2Dpredictor(30,0.8,6)
+    KfBenchmarkDataFile = 'KfBenchmarkDataset_20.npz'
+    ensmbSSL2Dpredictor(KfBenchmarkDataFile,30,0.8,6)
 
 
 
