@@ -104,7 +104,7 @@ def buildBenchmarkDataset(pseqs:dict, psites:dict, windown_wise:int, npzfile):
         n = len(seq)
         #给序列左右各填充windown_wise个'X'
         seq = list(seq)
-        for k in range(11):
+        for k in range(windown_wise):
             seq.insert(0,'#')
             seq.append('#')
         seq = "".join(seq)    
@@ -153,5 +153,14 @@ def generateKFBenchmarkDataset(posseqs:list, negseqs:list, npzfile, kf=5):
              testPos=X_test_pos_ls, testNeg=X_test_neg_ls)
 
 if __name__ == "__main__":
-    benchData = np.load('PDNA_224_11.npz')
-    generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset.npz')  
+    #benchData = np.load('PDNA_224_11.npz')
+    #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset.npz') 
+    pseqs,psites = readPDNA224()
+    buildBenchmarkDataset(pseqs, psites, 20, 'PDNA_224_20.npz')
+    benchData = np.load('PDNA_224_20.npz')
+    generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')
+    
+    
+    
+    
+    

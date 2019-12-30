@@ -95,9 +95,9 @@ def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile,
 
     return pred_prob
 
-def load_Kfdata(k):
+def load_Kfdata(benchmarkDataFile,k):
     from formulate import protsFormulateByXiaoInfoCode, protsFormulateByOneHotCode, protsFormulateByPhychemCode
-    data = np.load('KfBenchmarkDataset.npz',allow_pickle=True)
+    data = np.load(benchmarkDataFile, allow_pickle='True')
     train_posseq_ls, train_negseq_ls = data['trainPos'], data['trainNeg']
     test_posseq_ls, test_negseq_ls = data['testPos'], data['testNeg']
        
@@ -125,7 +125,7 @@ def load_Kfdata(k):
     return x_train_pos, x_train_neg, x_test_pos, x_test_neg
     
 # 集成。M:神经网络个数, r:样本抽样比例, f:特征个数     
-def ensmbSSL2Dpredictor(M, rate_samples, num_features):
+def ensmbSSL2Dpredictor(benchmarkDataFile, M, rate_samples, num_features):
     confParam = readConfParam()
     num_classes = confParam['num_classes']
     ws = confParam['windown_size']
@@ -134,7 +134,7 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
        
     y_pred, y_targ = np.zeros((0,2)), np.zeros((0,2))
     for i in range(5):
-        x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata(i)
+        x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata(benchmarkDataFile, i)
         
         # bulid testing samples set and their labels
         x_test = np.concatenate((x_test_pos, x_test_neg))
@@ -153,7 +153,7 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
         
         # 生成9个随机特征之空间和随机样本空间，得到训练集，然后集成
         num_samples = int(x_train_pos.shape[0] * rate_samples)
-        features_indx = list(range(x_train_pos.shape[1]))
+        features_indx = list(range(x_train_pos.shape[2]))
         pred = np.zeros((len(y_test),2))
         for m in range(M):
             # 随机取num_train_pos个正样本
@@ -198,7 +198,7 @@ def ensmbSSL2Dpredictor(M, rate_samples, num_features):
     print('mcc = {}'.format(matthews_corrcoef(y_t, y_p)))
 
 if __name__=="__main__":
-    ensmbSSL2Dpredictor(30,0.8,10)
+    ensmbSSL2Dpredictor('KfBenchmarkDataset_20.npz',30,0.7,24)
 
 
 
