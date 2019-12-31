@@ -49,3 +49,13 @@ Pre: 0.000000
 MCC: 0.000000 
 AUC: 0.500000
  
+On bechmark dataset, semi-supervised learning predicting result
+639	117
+6220	4494
+ACC: 0.447515 
+F1: 0.586493 
+Recall: 0.419451 
+Pre: 0.974626 
+MCC: 0.133951 
+AUC: 0.705009
+ 

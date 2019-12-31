@@ -70,6 +70,7 @@ def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsF
 
 def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile, **confParam):
     # semi-supervised learning
+    K.clear_session()
     model = supLearnNet((2*confParam['windown_size']+1, confParam['width'], confParam['channels'],), confParam['num_classes']) 
     #save_dir = confParam['save_dir']
     batch_size = confParam['batch_size']
@@ -81,14 +82,14 @@ def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile,
                      metrics=['accuracy']) 
     model.fit(x_train,y_train,
               batch_size=batch_size,
-              epochs=epochs,
+              epochs=epochs, 
               validation_split=0.1
               )
     
     # predict
     pred_prob = model.predict(x_test)
-    K.clear_session()
-    K.tf.reset_default_graph()
+    #K.clear_session()
+    #K.tf.reset_default_graph()
     
     # print predicting metrics
     displayMetrics(y_test, pred_prob, noteInfo, metricsFile) 
@@ -160,7 +161,7 @@ def ensmbSSL2Dpredictor(benchmarkDataFile, M, rate_samples, num_features):
             x_p, y_p = resample(x_train_pos, y_train_pos, n_samples=num_samples, replace=False)
             
             # 随机抽取2*num_train_pos个负样本，其中把一半的样本去标签
-            x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=num_samples*2, replace=False)
+            x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=num_samples, replace=False)
             y_n[num_samples:,0] = 0
             
             fid = resample(features_indx, n_samples=num_features, replace=False)
