@@ -96,9 +96,15 @@ def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile,
 
     return pred_prob
 
+<<<<<<< HEAD
+def load_Kfdata(KfBenchmarkDataFile,k):
+    from formulate import protsFormulateByXiaoInfoCode, protsFormulateByOneHotCode, protsFormulateByPhychemCode
+    data = np.load(KfBenchmarkDataFile)
+=======
 def load_Kfdata(benchmarkDataFile,k):
     from formulate import protsFormulateByXiaoInfoCode, protsFormulateByOneHotCode, protsFormulateByPhychemCode
     data = np.load(benchmarkDataFile, allow_pickle='True')
+>>>>>>> 39752cea4d451bba061496dc604f70c4b828e964
     train_posseq_ls, train_negseq_ls = data['trainPos'], data['trainNeg']
     test_posseq_ls, test_negseq_ls = data['testPos'], data['testNeg']
        
@@ -126,7 +132,11 @@ def load_Kfdata(benchmarkDataFile,k):
     return x_train_pos, x_train_neg, x_test_pos, x_test_neg
     
 # 集成。M:神经网络个数, r:样本抽样比例, f:特征个数     
+<<<<<<< HEAD
+def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
+=======
 def ensmbSSL2Dpredictor(benchmarkDataFile, M, rate_samples, num_features):
+>>>>>>> 39752cea4d451bba061496dc604f70c4b828e964
     confParam = readConfParam()
     num_classes = confParam['num_classes']
     ws = confParam['windown_size']
@@ -135,7 +145,11 @@ def ensmbSSL2Dpredictor(benchmarkDataFile, M, rate_samples, num_features):
        
     y_pred, y_targ = np.zeros((0,2)), np.zeros((0,2))
     for i in range(5):
+<<<<<<< HEAD
+        x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata(KfBenchmarkDataFile, i)
+=======
         x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata(benchmarkDataFile, i)
+>>>>>>> 39752cea4d451bba061496dc604f70c4b828e964
         
         # bulid testing samples set and their labels
         x_test = np.concatenate((x_test_pos, x_test_neg))
@@ -200,6 +214,7 @@ def ensmbSSL2Dpredictor(benchmarkDataFile, M, rate_samples, num_features):
 
 if __name__=="__main__":
     ensmbSSL2Dpredictor('KfBenchmarkDataset_20.npz',30,0.7,24)
+
 
 
 
