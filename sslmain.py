@@ -83,7 +83,7 @@ def supLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile,
     model.fit(x_train,y_train,
               batch_size=batch_size,
               epochs=epochs, 
-              validation_split=0.1
+              validation_data=resample(x_test,y_test,n_samples=4000)
               )
     
     # predict
@@ -160,7 +160,7 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
             x_p, y_p = resample(x_train_pos, y_train_pos, n_samples=num_samples, replace=False)
             
             # 随机抽取2*num_train_pos个负样本，其中把一半的样本去标签
-            x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=num_samples, replace=False)
+            x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=2*num_samples, replace=False)
             y_n[num_samples:,0] = 0
             
             fid = resample(features_indx, n_samples=num_features, replace=False)
@@ -176,8 +176,8 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
             noteInfo = '\nOn bechmark dataset, semi-supervised learning predicting result'
             metricsFile = 'semisup_info.txt'
     
-            #p = semisupLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
-            p = supLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
+            p = semisupLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
+            #p = supLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
             pred = pred+p
         
         pred = pred/M        
