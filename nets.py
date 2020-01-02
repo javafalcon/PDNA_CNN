@@ -21,23 +21,25 @@ from keras.regularizers import l2
 def semiSL2Dnet(shape,num_classes):
     l2value = 0.001
     x_input = Input(shape=shape,name="main_input")
-    conv1 = Conv2D(32,(3,1),padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input) 
+    conv1 = Conv2D(32,(9,1),padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input) 
+    pool1 = MaxPooling2D(pool_size=(7,1))(conv1)
+    drop1 = Dropout(0.3)
     
-    conv2 = Conv2D(64,(1,3),padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv1)               
+    #conv2 = Conv2D(64,(3,3),padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv1)               
     
-    conv3 = Conv2D(100,5,padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv2) 
+    #conv3 = Conv2D(100,5,padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv2) 
     
-    pool1 = MaxPooling2D(2)(conv3)
+    #pool1 = MaxPooling2D(2)(conv3)
     
-    drop_1 = Dropout(0.3)
-    x_a = drop_1(pool1)
-    x_b = drop_1(pool1)
+    #drop_1 = Dropout(0.3)
+    x_a = drop1(pool1)
+    x_b = drop1(pool1)
         
     flatten = Flatten()
     x_a = flatten(x_a)
     x_b = flatten(x_b)
         
-    dense_1 = Dense(1024, activation='relu')
+    dense_1 = Dense(100, activation='relu')
     x_a = dense_1(x_a)
     x_b = dense_1(x_b)
     
@@ -55,20 +57,29 @@ def semiSL2Dnet(shape,num_classes):
 def supLearnNet(shape,num_classes):
     l2value = 0.001
     x_input = Input(shape=shape,name="main_input")
-    conv1 = Conv2D(32,(3,1),padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input) 
-    
-    conv2 = Conv2D(32,(1,3),padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv1)               
-    
-    conv3 = Conv2D(100,5,padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv2) 
-    
-    pool1 = MaxPooling2D(2)(conv3)
-    flatten = Flatten()(pool1)
-            
-    dense_1 = Dense(1024, activation='relu')(flatten)
-        
-    drop_1 = Dropout(0.5)(dense_1)
-        
-    out = Dense(num_classes, activation="softmax")(drop_1)
+    x1_1 = Conv2D(32,1,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input)
+    x1_2 = Conv2D(32,1,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input)
+    x1_2 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_2)
+    x1_3 = Conv2D(32,1,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input)
+    x1_3 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_3)
+    x1_3 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_3)
+    x1_3 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_3)   
+    x = Concatenate()([x1_1,x1_2,x1_3])
+    """
+    x2_1 = Conv2D(100,1,padding='same',activation="relu")(x)
+    x2_2 = Conv2D(100,1,padding='same',activation="relu")(x)
+    x2_2 = Conv2D(100,3,padding='same',activation="relu")(x2_2)
+    x2_3 = Conv2D(100,1,padding='same',activation="relu")(x)
+    x2_3 = Conv2D(100,3,padding='same',activation="relu")(x2_3)
+    x2_3 = Conv2D(100,3,padding='same',activation="relu")(x2_3)
+    x2_3 = Conv2D(100,3,padding='same',activation="relu")(x2_3)
+    x = Concatenate()([x2_1,x2_2,x2_3])
+    """
+    x = Flatten()(x)
+    x = Dropout(0.5)(x)
+    x = Dense(1024,activation="relu",kernel_regularizer=l2(l2value))(x)
+    x = Dropout(0.5)(x)
+    out = Dense(2,activation="softmax")(x)
     
     model = Model(inputs=x_input, outputs=out)
     model.summary()
