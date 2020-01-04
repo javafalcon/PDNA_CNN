@@ -174,11 +174,14 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
             save_dir = os.path.join(os.getcwd(), confParam['save_dir'])
             modelFile = os.path.join(save_dir, model_name)
             noteInfo = '\nOn bechmark dataset, semi-supervised learning predicting result'
-            metricsFile = 'semisup_info.txt'
+            metricsFile = 'semisup_info_2.txt'
     
             p = semisupLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
+            
+            p = (p > 0.5).astype(int)
             #p = supLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
             pred = pred+p
+            print(pred)
         
         pred = pred/M        
         y_t = np.argmax(y_test,-1)
@@ -198,7 +201,7 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
     print('mcc = {}'.format(matthews_corrcoef(y_t, y_p)))
 
 if __name__=="__main__":
-    ensmbSSL2Dpredictor('KfBenchmarkDataset_20.npz',30,0.7,24)
+    ensmbSSL2Dpredictor('KfBenchmarkDataset_20.npz',11,0.7,34)
 
 
 
