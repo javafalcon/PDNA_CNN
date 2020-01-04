@@ -192,6 +192,13 @@ def protPhychemCode(seq):
         
     return x
 
+def protPositionCode(seq):
+    x = np.zeros(shape=(len(seq),))
+    for i in range(len(seq)):
+        if seq[i] == "#":
+            x[i] = 0
+        else:
+            
 
 def protsFormulateByChaosCode(lsseq:list):
     X = []
@@ -216,6 +223,8 @@ def protsFormulateByPhychemCode(lsseq:list):
     for seq in lsseq:
         X.append( protPhychemCode(seq))
     return np.array(X)
+
+
 #pseqs, psites = readPDNA62()                
 #posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
 #pseqs, psites = readPDNA224()
