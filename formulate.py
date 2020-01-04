@@ -162,7 +162,7 @@ def protMigratedXiaoInfoCode(seq):
     v = np.ones(shape=(5,)) * 0.5
     for i in range(len(seq)):
         if seq[i] == '#':
-                x[i] = np.zeros(shape=(6,))
+                x[i,:] = np.zeros(shape=(6,))
                 x[i,5] = 1 
         else:
             t = []
@@ -192,18 +192,26 @@ def protPhychemCode(seq):
         
     return x
 
-def protPositionCode(seq):
-    x = np.zeros(shape=(len(seq),))
+def protCumulativeFreqHotCode(seq):
+    aas = "ACDEFHIGKLMNQPRSTVWYX"
+    aadict = dict()
+    for key in aas:
+        aadict[key] = 0
+    x = np.zeros(shape=(len(seq),22))
     for i in range(len(seq)):
-        if seq[i] == "#":
-            x[i] = 0
+        x[i,:] = np.zeros(shape=(22,))
+        if seq[i] == "#":            
+            x[i,21] = 1
         else:
-            
+            k = aadict.get(seq[i],0)+1
+            aadict[seq[i]] = k
+            x[i, aas.index(seq[i])] = k/(i+1)
+    return x
 
 def protsFormulateByChaosCode(lsseq:list):
     X = []
     for seq in lsseq:
-        X.append( protMigratedCode(seq))
+        X.append( protDepHotCode(seq))
     return np.array(X)
 
 def protsFormulateByXiaoInfoCode(lsseq:list):
@@ -224,7 +232,11 @@ def protsFormulateByPhychemCode(lsseq:list):
         X.append( protPhychemCode(seq))
     return np.array(X)
 
-
+def protsFormulateByCumulativeFreqHotCode(lsseq:list):
+    X = []
+    for seq in lsseq:
+        X.append( protCumulativeFreqHotCode(seq))
+    return np.array(X)
 #pseqs, psites = readPDNA62()                
 #posseqs, negseqs = getTrainingDataset(pseqs, psites, 11)                
 #pseqs, psites = readPDNA224()
