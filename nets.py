@@ -57,6 +57,13 @@ def semiSL2Dnet(shape,num_classes):
 def supLearnNet(shape,num_classes):
     l2value = 0.001
     x_input = Input(shape=shape,name="main_input")
+    """
+    x = Conv2D(32,(9,1),padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input) 
+    x = MaxPooling2D(pool_size=(7,1))(x)
+    x = Dropout(0.3)(x)
+    """
+    
+    x_input = Input(shape=shape,name="main_input")
     x1_1 = Conv2D(32,1,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input)
     x1_2 = Conv2D(32,1,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input)
     x1_2 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_2)
@@ -65,6 +72,7 @@ def supLearnNet(shape,num_classes):
     x1_3 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_3)
     x1_3 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_3)   
     x = Concatenate()([x1_1,x1_2,x1_3])
+    
     """
     x2_1 = Conv2D(100,1,padding='same',activation="relu")(x)
     x2_2 = Conv2D(100,1,padding='same',activation="relu")(x)
@@ -76,8 +84,7 @@ def supLearnNet(shape,num_classes):
     x = Concatenate()([x2_1,x2_2,x2_3])
     """
     x = Flatten()(x)
-    x = Dropout(0.5)(x)
-    x = Dense(1024,activation="relu",kernel_regularizer=l2(l2value))(x)
+    x = Dense(100,activation="relu",kernel_regularizer=l2(l2value))(x)
     x = Dropout(0.5)(x)
     out = Dense(2,activation="softmax")(x)
     
