@@ -1,0 +1,46 @@
+# PDNA-224
+1SFU_A does not have pssm
+2FKC_A does not have pssm
+2Q2K_A does not have pssm
+3C25_A does not have pssm
+3GXQ_A does not have pssm
+3IGM_A does not have pssm
+3M7K_A does not have pssm
+
+# PDNA-543
+2OST_A does not have pssm
+2LEV_A does not have pssm
+4JQD_E does not have pssm
+3M7K_A does not have pssm
+3BM3_A does not have pssm
+4LB6_B does not have pssm
+3IMB_C does not have pssm
+3QWS_B does not have pssm
+3ZI5_D does not have pssm
+3U58_A does not have pssm
+2GLO_A does not have pssm
+3U3W_B does not have pssm
+2V6E_B does not have pssm
+2CAX_A does not have pssm
+3C25_A does not have pssm
+4R28_C does not have pssm
+4PBA_C does not have pssm
+3WAZ_B does not have pssm
+3IGM_B does not have pssm
+1WTE_B does not have pssm
+2OAA_B does not have pssm
+2FKC_B does not have pssm
+1SFU_B does not have pssm
+1PP8_P does not have pssm
+2VLA_A does not have pssm
+3MX4_B does not have pssm
+3ZHM_A does not have pssm
+3JX7_A does not have pssm
+4PSO_B does not have pssm
+3DPG_A does not have pssm
+2Q2K_A does not have pssm
+2P0J_A does not have pssm
+3VW4_A does not have pssm
+3GXQ_B does not have pssm
+2GKD_A does not have pssm
+4ITQ_A does not have pssm
