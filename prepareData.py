@@ -90,12 +90,74 @@ def readPDNA224():
                             break
     return pdna_seqs_224, pdna_sites_224
 
-# 对蛋白质序列进行滑窗，生成正样本和负样本。滑窗尺寸为ws，一个氨基酸左右各取ws个氨基酸，
-# 构成一个长度为2*ws+1的肽链，如果中间的氨基酸是与DNA结合的位点，则该序列为正样本
-# 否则为负样本。如果氨基酸前后不足ws个残基，则补‘#’       
-# 保存滑窗结果到posseqs和negseqs两个列表对象，并保存到npz格式文件中：
-# posseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列
-# negseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列       
+def readPDNA543():
+    from Bio import SeqIO
+    train_seqs = {}
+    train_sites = {}
+    for seq_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-543_sequence.fasta', 'fasta'):
+        train_seqs[seq_record.id] = str(seq_record.seq)
+    
+    for site_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-543_label.fasta', 'fasta'):
+        train_sites[site_record.id] = str(site_record.seq)
+    
+    test_seqs, test_sites = {}, {}
+    for seq_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-TEST_sequence.fasta', 'fasta'):
+        test_seqs[seq_record.id] = str(seq_record.seq)
+    
+    for site_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-TEST_label.fasta', 'fasta'):
+        test_sites[site_record.id] = str(site_record.seq)
+    return (train_seqs, train_sites), (test_seqs, test_sites)
+
+"""
+ 对蛋白质序列进行滑窗，生成正样本和负样本。滑窗尺寸为ws，一个氨基酸左右各取ws个氨基酸，
+ 构成一个长度为2*ws+1的肽链，如果中间的氨基酸是与DNA结合的位点，则该序列为正样本
+ 否则为负样本。如果氨基酸前后不足ws个残基，则补‘#’     
+ 保存滑窗结果到posseqs和negseqs两个列表对象，并保存到npz格式文件中：
+Param:
+ -pseqs: dict type. protein sequences
+ -psites: dict type. protein binding sites. 0:not binding site; 1: binding site
+ -windown_wise: slip windown size
+ -npzfile: save data filename
+ 
+ posseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列
+ negseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列   
+"""
+def buildBenchmarkDataset2(pseqs:dict, psites:dict, windown_wise:int, npzfile:str):
+   posseqs, negseqs = list(), list()
+   for key in pseqs.keys():
+       seq = pseqs[key]
+       seq = list(seq)
+       n = len(seq)
+       for k in range(windown_wise):
+           seq.insert(0,'#')
+           seq.append('#')
+       seq = "".join(seq)
+       site = psites[key]
+       for i in range(windown_wise, n + windown_wise):
+           start = i - windown_wise
+           end = i + windown_wise + 1
+           seqseg = seq[start:end]
+           
+           if site[i - windown_wise] == '0':
+               negseqs.append(seqseg)
+           else:
+               posseqs.append(seqseg)
+    
+   np.savez(npzfile, pos=posseqs, neg=negseqs)
+"""
+ 对蛋白质序列进行滑窗，生成正样本和负样本。滑窗尺寸为ws，一个氨基酸左右各取ws个氨基酸，
+ 构成一个长度为2*ws+1的肽链，如果中间的氨基酸是与DNA结合的位点，则该序列为正样本
+ 否则为负样本。如果氨基酸前后不足ws个残基，则补‘#’     
+ 保存滑窗结果到posseqs和negseqs两个列表对象，并保存到npz格式文件中：
+Param:
+ -pseqs: dict type. protein sequences
+ -psites: dict type. protein binding sites. each element in psites[id].value is the binding position (start count from 1 )
+ -windown_wise: slip windown size
+ -npzfile: save data filename
+ 
+ posseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列
+ negseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列   
+"""    
 def buildBenchmarkDataset(pseqs:dict, psites:dict, windown_wise:int, npzfile):
     keys = pseqs.keys()
     posseqs, negseqs = [], []
@@ -155,10 +217,13 @@ def generateKFBenchmarkDataset(posseqs:list, negseqs:list, npzfile, kf=5):
 if __name__ == "__main__":
     #benchData = np.load('PDNA_224_11.npz')
     #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset.npz') 
-    pseqs,psites = readPDNA224()
-    buildBenchmarkDataset(pseqs, psites, 20, 'PDNA_224_20.npz')
-    benchData = np.load('PDNA_224_20.npz')
-    generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')
+    #pseqs,psites = readPDNA224()
+    #buildBenchmarkDataset(pseqs, psites, 20, 'PDNA_224_20.npz')
+    #benchData = np.load('PDNA_224_20.npz')
+    #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')
+    (train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543()
+    buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
+    buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
     
     
     

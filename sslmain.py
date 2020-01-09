@@ -124,6 +124,19 @@ def load_Kfdata(benchmarkDataFile,k):
     x_test_neg = np.block([xix[:,:,:-1],ohx[:,:,:-1],pcx])
     
     return x_train_pos, x_train_neg, x_test_pos, x_test_neg
+
+def load_Kfdata_2(benchmarkDataFile, k):
+    from formulate import protsFormulateByCumulativeFreqHotCode
+    data = np.load(benchmarkDataFile, allow_pickle='True')
+    train_posseq_ls, train_negseq_ls = data['trainPos'], data['trainNeg']
+    test_posseq_ls, test_negseq_ls = data['testPos'], data['testNeg']
+    
+    x_train_pos = protsFormulateByCumulativeFreqHotCode(train_posseq_ls[k])
+    x_train_neg = protsFormulateByCumulativeFreqHotCode(train_negseq_ls[k])
+    x_test_pos = protsFormulateByCumulativeFreqHotCode(test_posseq_ls[k])
+    x_test_neg = protsFormulateByCumulativeFreqHotCode(test_negseq_ls[k])
+    
+    return x_train_pos, x_train_neg, x_test_pos, x_test_neg
     
 # 集成。M:神经网络个数, r:样本抽样比例, f:特征个数     
 def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
@@ -135,7 +148,7 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
        
     y_pred, y_targ = np.zeros((0,2)), np.zeros((0,2))
     for i in range(5):
-        x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata(KfBenchmarkDataFile, i)       
+        x_train_pos, x_train_neg, x_test_pos, x_test_neg = load_Kfdata_2(KfBenchmarkDataFile, i)       
         # bulid testing samples set and their labels
         x_test = np.concatenate((x_test_pos, x_test_neg))
         
@@ -160,8 +173,9 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
             x_p, y_p = resample(x_train_pos, y_train_pos, n_samples=num_samples, replace=False)
             
             # 随机抽取2*num_train_pos个负样本，其中把一半的样本去标签
-            x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=2*num_samples, replace=False)
-            y_n[num_samples:,0] = 0
+            #x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=2*num_samples, replace=False)
+            #y_n[num_samples:,0] = 0
+            x_n, y_n = resample(x_train_neg, y_train_neg, n_samples=num_samples, replace=False)
             
             fid = resample(features_indx, n_samples=num_features, replace=False)
             x = np.concatenate((x_p[:,:,fid], x_n[:,:,fid]))
@@ -174,11 +188,15 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
             save_dir = os.path.join(os.getcwd(), confParam['save_dir'])
             modelFile = os.path.join(save_dir, model_name)
             noteInfo = '\nOn bechmark dataset, semi-supervised learning predicting result'
-            metricsFile = 'semisup_info.txt'
+            metricsFile = 'semisup_info_2.txt'
     
             p = semisupLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
+            
+            p = (p > 0.5).astype(int)
             #p = supLearn(x, y, x_t, y_test, modelFile, noteInfo, metricsFile, **confParam)
+
             pred = pred+p
+            #print(pred)
         
         pred = pred/M        
         y_t = np.argmax(y_test,-1)
@@ -198,7 +216,8 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
     print('mcc = {}'.format(matthews_corrcoef(y_t, y_p)))
 
 if __name__=="__main__":
-    ensmbSSL2Dpredictor('KfBenchmarkDataset_20.npz',10,0.7,24)
+    ensmbSSL2Dpredictor('KfBenchmarkDataset_20.npz',11,0.7,22)
+
 
 
 

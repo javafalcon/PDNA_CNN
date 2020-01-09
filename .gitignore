@@ -1,3 +1,4 @@
 save_models/*.*
 result/
 __pycache__/
+PDNA224_PSSM/
