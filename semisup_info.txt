@@ -1,0 +1,501 @@
+
+On bechmark dataset, semi-supervised learning predicting result
+475	281
+4023	6691
+ACC: 0.624760 
+F1: 0.756644 
+Recall: 0.624510 
+Pre: 0.959696 
+MCC: 0.128486 
+AUC: 0.682102
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+522	234
+4499	6215
+ACC: 0.587358 
+F1: 0.724232 
+Recall: 0.580082 
+Pre: 0.963715 
+MCC: 0.135318 
+AUC: 0.688303
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	756
+0	10714
+ACC: 0.934089 
+F1: 0.965921 
+Recall: 1.000000 
+Pre: 0.934089 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+505	251
+4371	6343
+ACC: 0.597036 
+F1: 0.732956 
+Recall: 0.592029 
+Pre: 0.961935 
+MCC: 0.130507 
+AUC: 0.670856
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	756
+0	10714
+ACC: 0.934089 
+F1: 0.965921 
+Recall: 1.000000 
+Pre: 0.934089 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+496	260
+4744	5970
+ACC: 0.563731 
+F1: 0.704674 
+Recall: 0.557215 
+Pre: 0.958266 
+MCC: 0.106247 
+AUC: 0.655246
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+481	275
+4015	6699
+ACC: 0.625981 
+F1: 0.757463 
+Recall: 0.625257 
+Pre: 0.960568 
+MCC: 0.132909 
+AUC: 0.678252
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	756
+0	10714
+ACC: 0.934089 
+F1: 0.965921 
+Recall: 1.000000 
+Pre: 0.934089 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	756
+0	10714
+ACC: 0.934089 
+F1: 0.965921 
+Recall: 1.000000 
+Pre: 0.934089 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+494	262
+4335	6379
+ACC: 0.599215 
+F1: 0.735120 
+Recall: 0.595389 
+Pre: 0.960548 
+MCC: 0.125052 
+AUC: 0.678562
+ 
+On bechmark dataset, semi-supervised learning predicting result
+490	266
+4297	6417
+ACC: 0.602180 
+F1: 0.737713 
+Recall: 0.598936 
+Pre: 0.960198 
+MCC: 0.124327 
+AUC: 0.677006
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	756
+0	10714
+ACC: 0.934089 
+F1: 0.965921 
+Recall: 1.000000 
+Pre: 0.934089 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+487	269
+4308	6406
+ACC: 0.600959 
+F1: 0.736788 
+Recall: 0.597909 
+Pre: 0.959700 
+MCC: 0.121785 
+AUC: 0.662038
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	756
+0	10714
+ACC: 0.934089 
+F1: 0.965921 
+Recall: 1.000000 
+Pre: 0.934089 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+478	278
+3963	6751
+ACC: 0.630253 
+F1: 0.760976 
+Recall: 0.630110 
+Pre: 0.960450 
+MCC: 0.133656 
+AUC: 0.676729
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+469	287
+3682	7032
+ACC: 0.653967 
+F1: 0.779904 
+Recall: 0.656338 
+Pre: 0.960787 
+MCC: 0.142875 
+AUC: 0.677852
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+756	0
+10714	0
+ACC: 0.065911 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+474	282
+4386	6328
+ACC: 0.593025 
+F1: 0.730547 
+Recall: 0.590629 
+Pre: 0.957337 
+MCC: 0.109271 
+AUC: 0.645582
+ 
+On bechmark dataset, semi-supervised learning predicting result
+441	314
+4064	6650
+ACC: 0.618275 
+F1: 0.752348 
+Recall: 0.620683 
+Pre: 0.954911 
+MCC: 0.103987 
+AUC: 0.636311
+ 
+On bechmark dataset, semi-supervised learning predicting result
+755	0
+10714	0
+ACC: 0.065830 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+755	0
+10714	0
+ACC: 0.065830 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+452	303
+3784	6930
+ACC: 0.643648 
+F1: 0.772274 
+Recall: 0.646817 
+Pre: 0.958109 
+MCC: 0.126139 
+AUC: 0.667520
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+755	0
+10714	0
+ACC: 0.065830 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+444	311
+4223	6491
+ACC: 0.604673 
+F1: 0.741151 
+Recall: 0.605843 
+Pre: 0.954278 
+MCC: 0.097890 
+AUC: 0.639528
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+755	0
+10714	0
+ACC: 0.065830 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+510	245
+4504	6210
+ACC: 0.585927 
+F1: 0.723397 
+Recall: 0.579615 
+Pre: 0.962045 
+MCC: 0.127538 
+AUC: 0.673327
+ 
+On bechmark dataset, semi-supervised learning predicting result
+755	0
+10714	0
+ACC: 0.065830 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+755	0
+10714	0
+ACC: 0.065830 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+755	0
+10714	0
+ACC: 0.065830 
+F1: 0.000000 
+Recall: 0.000000 
+Pre: 0.000000 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 
+On bechmark dataset, semi-supervised learning predicting result
+0	755
+0	10714
+ACC: 0.934170 
+F1: 0.965965 
+Recall: 1.000000 
+Pre: 0.934170 
+MCC: 0.000000 
+AUC: 0.500000
+ 

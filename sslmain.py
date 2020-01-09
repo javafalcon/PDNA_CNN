@@ -198,7 +198,7 @@ def ensmbSSL2Dpredictor(KfBenchmarkDataFile, M, rate_samples, num_features):
     print('mcc = {}'.format(matthews_corrcoef(y_t, y_p)))
 
 if __name__=="__main__":
-    ensmbSSL2Dpredictor('KfBenchmarkDataset_20.npz',30,0.7,24)
+    ensmbSSL2Dpredictor('KfBenchmarkDataset_20.npz',10,0.7,24)
 
 
 
