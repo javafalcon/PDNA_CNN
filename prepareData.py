@@ -90,7 +90,7 @@ def readPDNA224():
                             break
     return pdna_seqs_224, pdna_sites_224
 
-def readPDNA543():
+def readPDNA543_seqs_sites():
     from Bio import SeqIO
     train_seqs = {}
     train_sites = {}
@@ -108,6 +108,33 @@ def readPDNA543():
         test_sites[site_record.id] = str(site_record.seq)
     return (train_seqs, train_sites), (test_seqs, test_sites)
 
+def readPDNA543_hhm_sites():    
+    import os
+    from HHSuite import read_hhm
+    from Bio import SeqIO
+    
+    traindir = '/home/weizhong/Repoes/PDNA_CNN/PDNA_Data/PDNA543_hhm'
+    testdir = '/home/weizhong/Reposes/PDNA_CNN/PDNA_Data/PDNA543TEST_hhm'
+    
+    x_train = {}
+    train_sites = {}
+    for file in os.listdir(traindir):
+        r = read_hhm(os.path.join(traindir, file))
+        x_train[file] = r[1]
+        
+    for site_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-543_label.fasta', 'fasta'):
+        train_sites[site_record.id] = str(site_record.seq)
+    
+    x_test = {}
+    test_sites = {}
+    for file in os.listdir(testdir):
+        r = read_hhm(os.path.join(testdir,file))
+        x_test[file] = r[1]
+        
+    for site_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-TEST_label.fasta', 'fasta'):
+        test_sites[site_record.id] = str(site_record.seq) 
+        
+    (x_train, train_sites), (x_test, test_sites) = readPDNA543_seqs_sites()
 """
  对蛋白质序列进行滑窗，生成正样本和负样本。滑窗尺寸为ws，一个氨基酸左右各取ws个氨基酸，
  构成一个长度为2*ws+1的肽链，如果中间的氨基酸是与DNA结合的位点，则该序列为正样本
