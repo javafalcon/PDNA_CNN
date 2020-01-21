@@ -56,3 +56,31 @@ def load_PDNA543(trainNpzFile, testNpzFile):
         X_test_neg.append(m) 
     
     return (np.array(X_train_pos), np.array(X_train_neg)), (np.array(X_test_pos), np.array(X_test_neg))
+
+def load_PDNA543_HHM(x_hhm:dict, y_sites:dict, ws=11):
+    x_pos, x_neg = [], []
+    for key in x_hhm.keys():
+        site = y_sites[key]
+        hhm = x_hhm[key]
+        head = np.zeros((30,))
+        rear = np.zeros((1,30))
+        for i in range(ws):
+            hhm=np.insert(hhm,0,head,axis=0)
+        for i in range(ws):
+            hhm=np.append(hhm,rear,axis=0)
+        n = len(site)
+        for i in range(ws,ws+n):
+            t = hhm[i-ws:i+ws+1]            
+            if site[i-ws] == '1':
+                x_pos.append(t)
+            else:
+                x_neg.append(t)
+                
+    return np.array(x_pos), np.array(x_neg)
+    
+if __name__ == "__main__":
+    from prepareData import readPDNA543_hhm_sites
+    (train_hhm, train_sites), (test_hhm, test_sites) = readPDNA543_hhm_sites()
+    x_pos, x_neg = load_PDNA543_HHM(train_hhm, train_sites)
+    
+    

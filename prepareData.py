@@ -113,8 +113,8 @@ def readPDNA543_hhm_sites():
     from HHSuite import read_hhm
     from Bio import SeqIO
     
-    traindir = '/home/weizhong/Repoes/PDNA_CNN/PDNA_Data/PDNA543_hhm'
-    testdir = '/home/weizhong/Reposes/PDNA_CNN/PDNA_Data/PDNA543TEST_hhm'
+    traindir = 'PDNA_Data/PDNA543_hhm'
+    testdir = 'PDNA_Data/PDNA543TEST_hhm'
     
     x_train = {}
     train_sites = {}
@@ -134,7 +134,8 @@ def readPDNA543_hhm_sites():
     for site_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-TEST_label.fasta', 'fasta'):
         test_sites[site_record.id] = str(site_record.seq) 
         
-    (x_train, train_sites), (x_test, test_sites) = readPDNA543_seqs_sites()
+    return (x_train, train_sites), (x_test, test_sites) 
+
 """
  对蛋白质序列进行滑窗，生成正样本和负样本。滑窗尺寸为ws，一个氨基酸左右各取ws个氨基酸，
  构成一个长度为2*ws+1的肽链，如果中间的氨基酸是与DNA结合的位点，则该序列为正样本
@@ -247,11 +248,10 @@ if __name__ == "__main__":
     #pseqs,psites = readPDNA224()
     #buildBenchmarkDataset(pseqs, psites, 20, 'PDNA_224_20.npz')
     #benchData = np.load('PDNA_224_20.npz')
-    #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')
-    (train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543()
-    buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
-    buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
-    
+    #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')   
+    #buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
+    #buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
+    (x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
     
     
     

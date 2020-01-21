@@ -180,6 +180,19 @@ def load_pdna_543():
     
     return (x_train, y_train), (x_test, y_test)
 
+def load_PDNA543_hhm():
+    from dataset import load_PDNA543_HHM
+    from prepareData import readPDNA543_hhm_sites
+    (train_hhm, train_sites), (test_hhm, test_sites) = readPDNA543_hhm_sites()
+    x_train_pos, x_train_neg = load_PDNA543_HHM(train_hhm, train_sites,ws=11)
+    x_neg = resample(x_train_neg, n_samples=x_train_pos.shape[0], replace=False)
+    x_train = np.concatenate((x_train_pos, x_neg))
+    y_train = np.zeros((x_train.shape[0],2))
+    y_train[:x_train_pos.shape[0],1] = 1
+    y_train[x_train_pos.shape[0]:,0] = 1
+    x_train = x_train.reshape(-1, 23, 23, 1).astype('float32')
+    x_train, y_train = shuffle(x_train, y_train)
+    
 
 if __name__ == "__main__":
     #import numpy as np
