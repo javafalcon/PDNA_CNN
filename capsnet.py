@@ -13,7 +13,6 @@ from capsulelayers import CapsuleLayer, PrimaryCap, Length, Mask
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 from sklearn.utils import class_weight, shuffle, resample
 
-width,hight=31,30
 
 def CapsNet(input_shape, n_class, num_routing, kernel_size=7):
     """
@@ -215,6 +214,31 @@ def load_PDNA543_hhm():
     
     return (x_train, y_train), (x_test, y_test)
 
+def load_test(testdatafile):
+    data = np.load(testdatafile, allow_pickle='True')
+    x_test_pos, x_test_neg = data['pos'], data['neg']   
+    x_test = np.concatenate((x_test_pos, x_test_neg))
+    y_test = np.zeros((x_test.shape[0],2))
+    y_test[:x_test_pos.shape[0], 1] = 1
+    y_test[x_test_pos.shape[0]:,0] = 1
+    x_test = x_test.reshape(-1, x_test.shape[1], x_test.shape[2], 1).astype('float32')
+    
+    return  (x_test, y_test)
+
+def load_resampleTrain(traindatafile, neg_samples=0):
+    data = np.load(traindatafile, allow_pickle='True')
+    x_train_pos, x_train_neg = data['pos'], data['neg']
+    if neg_samples == 0:
+        neg_samples = x_train_pos.shape[0]
+    x_neg = resample(x_train_neg, n_samples=neg_samples, replace=False)
+    x_train = np.concatenate((x_train_pos, x_neg))
+    y_train = np.zeros((x_train.shape[0],2))
+    y_train[:x_train_pos.shape[0],1] = 1
+    y_train[x_train_pos.shape[0]:,0] = 1
+    x_train = x_train.reshape(-1, x_train.shape[1], x_train.shape[2], 1).astype('float32')
+    x_train, y_train = shuffle(x_train, y_train)
+    
+    return (x_train, y_train)
 """
 def load_PDNA543_hhm_xiaoInfo():
     from dataset543 import gen_PDNA543_accXiaoInfo
@@ -246,14 +270,19 @@ if __name__ == "__main__":
         os.makedirs(args.save_dir)
         
     # load data
-    (x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
+    #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
+    traindatafile = 'PDNA543_hhm_accxiaoinfo_11.npz'
+    testdatafile = 'PDNA543TEST_hhm_accxiaoinfo_11.npz'    
+    (x_train, y_train) = load_resampleTrain(traindatafile)
+    (x_test, y_test) = load_test(testdatafile)
+    
     y_pred = np.zeros(shape=(y_test.shape[0],))
     ker=[3,5,7,9,11]
     for k in range(5):
         
         print("predictor No.{}：x_train.shape：{}".format(k, x_train.shape))
         # define model
-        model = CapsNet(input_shape=[width, hight, 1],
+        model = CapsNet(input_shape=x_train.shape[1:],
                         n_class=len(np.unique(np.argmax(y_train, 1))),
                         num_routing=args.num_routing, kernel_size=ker[k])
         model.summary()
@@ -265,7 +294,8 @@ if __name__ == "__main__":
         y_pred = y_pred + y_p
         K.clear_session()
         tf.reset_default_graph()
-        (x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
+        #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
+        (x_train, y_train) = load_resampleTrain(traindatafile)
     
     y_pred = y_pred/9
     y_p = (y_pred>0.5).astype(float)
@@ -273,7 +303,7 @@ if __name__ == "__main__":
     print('Test Accuracy:', accuracy_score(y_t, y_p))
     print('Test mattews-corrcoef', matthews_corrcoef(y_t, y_p))
     """
-    当序列滑窗大小=21时（左右各11个氨基酸）上面输出结果为：
+    HHM formulate sequence, 当序列滑窗大小=21时（左右各11个氨基酸）上面输出结果为：
     Test Accuracy: 0.9221280921721451
     Test mattews-corrcoef 0.36118641755834363
     """

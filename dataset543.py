@@ -89,7 +89,7 @@ def readPDNA543_hhm_sites():
 
 """
 params:
-    @seqs sequense of proteins. For example: key1:'AVKKISQYACQRRTTLNNY'
+    @seqs sequence of proteins. For example: key1:'AVKKISQYACQRRTTLNNY'
     @sites the sites of protein-DNA. For example:key1:'0001100001001000000'
     @datefile the file save the data
 """    

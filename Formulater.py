@@ -38,7 +38,8 @@ class Formulater:
                 c = code['XiaoInfoCode'][seq[i]]
                 for k in range(5):
                     x[i,k] = int(c[k])
-        return x    
+        return x  
+    
     def accumulateXiaoInfo(self, seq):
         x = self.xiaoInfo(seq)
         arr = np.ones((5,)) * 0.5
