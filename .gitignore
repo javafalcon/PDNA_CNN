@@ -10,4 +10,5 @@ PDNA_Data/PDNA543TEST_hhm/
 PDNA_Data/scope_independent_PSSM/
 PDNA_Data/inputseq.fasta
 PDNA_Data/*.zip
+*.npz
 

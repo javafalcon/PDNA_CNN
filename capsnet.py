@@ -7,13 +7,15 @@ Created on Wed Jan  8 20:42:03 2020
 import numpy as np
 from keras import layers, models, optimizers
 from keras import backend as K
+import tensorflow as tf
 #from keras.utils import to_categorical
 from capsulelayers import CapsuleLayer, PrimaryCap, Length, Mask
 from sklearn.metrics import accuracy_score, matthews_corrcoef
 from sklearn.utils import class_weight, shuffle, resample
 
+width,hight=31,30
 
-def CapsNet(input_shape, n_class, num_routing):
+def CapsNet(input_shape, n_class, num_routing, kernel_size=7):
     """
     A Capsule Network on PDNA-543.
     :param input_shape: data shape, 3d, [width, height, channels],for example:[21,28,1]
@@ -24,9 +26,9 @@ def CapsNet(input_shape, n_class, num_routing):
     x = layers.Input(shape=input_shape)
 
     # Layer 1: Just a conventional Conv2D layer
-    conv1 = layers.Conv2D(filters=128, kernel_size=7, strides=1, padding='valid', activation='relu', name='conv1')(x)
+    conv1 = layers.Conv2D(filters=128, kernel_size=kernel_size, strides=1, padding='valid', activation='relu', name='conv1')(x)
     # Layer 2: Conv2D layer with `squash` activation, then reshape to [None, num_capsule, dim_vector]
-    primarycaps = PrimaryCap(conv1, dim_vector=16, n_channels=32, kernel_size=7, strides=2, padding='valid')
+    primarycaps = PrimaryCap(conv1, dim_vector=16, n_channels=32, kernel_size=kernel_size, strides=2, padding='valid')
 
     # Layer 3: Capsule layer. Routing algorithm works here.
     digitcaps = CapsuleLayer(num_capsule=n_class, dim_vector=32, num_routing=num_routing, name='digitcaps')(primarycaps)
@@ -34,7 +36,7 @@ def CapsNet(input_shape, n_class, num_routing):
     # Layer 4: This is an auxiliary layer to replace each capsule with its length. Just to match the true label's shape.
     # If using tensorflow, this will not be necessary. :)
     out_caps = Length(name='out_caps')(digitcaps)
-    """
+    
     # Decoder network.
     y = layers.Input(shape=(n_class,))
     masked = Mask()([digitcaps, y])  # The true label is used to mask the output of capsule layer.
@@ -47,7 +49,7 @@ def CapsNet(input_shape, n_class, num_routing):
     return models.Model([x, y], [out_caps, x_recon])
     """
     return models.Model(inputs=x, outputs=out_caps)
-
+    """
 def mcc(y_true, y_pred):
     return matthews_corrcoef(K.eval(K.argmax(y_true,1)), K.eval(K.argmax(y_pred,1)))
 
@@ -91,13 +93,17 @@ def train(model, data, args):
                   metrics={'out_caps': mcc})
     """
     model.compile(optimizer=optimizers.Adam(lr=args.lr),
-                  loss=margin_loss,
+                  loss=[margin_loss,'mse'],
+                  loss_weights=[1., args.lam_recon],
                   metrics={'out_caps': "accuracy"})
     
     # Training without data augmentation:
-    """
-    model.fit([x_train, y_train], [y_train, x_train], batch_size=args.batch_size, epochs=args.epochs,
-              validation_data=[[x_test, y_test], [y_test, x_test]], callbacks=[log, tb, checkpoint, lr_decay])
+    
+    model.fit([x_train, y_train], [y_train, x_train], 
+              batch_size=args.batch_size, 
+              epochs=args.epochs,
+              validation_data=[[x_test, y_test], [y_test, x_test]], 
+              callbacks=[log, tb, checkpoint, lr_decay])
     """
     #cw = class_weight.compute_class_weight('balanced',np.unique(y_train), y_train)
     #cw = dict(enumerate(cw))
@@ -106,7 +112,7 @@ def train(model, data, args):
               validation_data=[x_test, y_test], 
               #class_weight=cw,
               callbacks=[log, tb, checkpoint, lr_decay])
-
+    """
     """
     # Begin: Training with data augmentation ---------------------------------------------------------------------#
     def train_generator(x, y, batch_size, shift_fraction=0.):
@@ -136,13 +142,13 @@ def train(model, data, args):
 
 def test(model, data):
     x_test, y_test = data
-    y_pred = model.predict(x_test, batch_size=100)
+    y_pred, x_recon = model.predict([x_test, y_test], batch_size=100)
     print('-'*50)
     y_p = np.argmax(y_pred, 1)
     y_t = np.argmax(y_test,1)
-    print('Test acc:', np.sum(np.argmax(y_pred, 1) == np.argmax(y_test, 1))/y_test.shape[0])
     print('Test Accuracy:', accuracy_score(y_t, y_p))
     print('Test mattews-corrcoef', matthews_corrcoef(y_t, y_p))
+    return y_p
     """
     import matplotlib.pyplot as plt
     from utils import combine_images
@@ -158,42 +164,62 @@ def test(model, data):
     plt.show()
     """
 
-def load_pdna_543():
-    # the data, shuffled and split between train and test sets
-    from dataset import load_PDNA543
-    (x_train_pos, x_train_neg), (x_test_pos, x_test_neg) = load_PDNA543('PDNA_543_train_10.npz', 'PDNA_543_test_10.npz')
+def load_PDNA543_accXiaoInfo():
+    from dataset543 import gen_PDNA543_accXiaoInfo
+    testdatafile = 'PDNA543TEST_seqs_11.npz'
+    traindatafile = 'PDNA543_seqs_11.npz'
+    x_train_pos, x_train_neg = gen_PDNA543_accXiaoInfo(traindatafile)
+    x_test_pos, x_test_neg = gen_PDNA543_accXiaoInfo(testdatafile)
     
     x_test = np.concatenate((x_test_pos, x_test_neg))
     y_test = np.zeros((x_test.shape[0],2))
     y_test[:x_test_pos.shape[0], 1] = 1
     y_test[x_test_pos.shape[0]:,0] = 1
-    x_test = x_test.reshape(-1, 21, 21, 1).astype('float32')
+    x_test = x_test.reshape(-1, width, hight, 1).astype('float32')
     
     x_neg = resample(x_train_neg, n_samples=x_train_pos.shape[0], replace=False)
     x_train = np.concatenate((x_train_pos, x_neg))
     y_train = np.zeros((x_train.shape[0],2))
     y_train[:x_train_pos.shape[0], 1] = 1
     y_train[x_train_pos.shape[0]:, 0] = 1
-    x_train = x_train.reshape(-1, 21, 21, 1).astype('float32')
+    x_train = x_train.reshape(-1, width, hight, 1).astype('float32')
     x_train,y_train = shuffle(x_train, y_train)
-    
-    
+       
     return (x_train, y_train), (x_test, y_test)
 
 def load_PDNA543_hhm():
-    from dataset import load_PDNA543_HHM
-    from prepareData import readPDNA543_hhm_sites
+    from dataset543 import gen_PDNA543_HHM,readPDNA543_hhm_sites
+    
     (train_hhm, train_sites), (test_hhm, test_sites) = readPDNA543_hhm_sites()
-    x_train_pos, x_train_neg = load_PDNA543_HHM(train_hhm, train_sites,ws=11)
+    testdatafile = 'PDNA543TEST_HHM_15.npz'
+    traindatafile = 'PDNA543_HHM_15.npz'
+    x_test_pos, x_test_neg = gen_PDNA543_HHM(test_hhm, test_sites, testdatafile, ws=15)
+    data = np.load(testdatafile, allow_pickle='True')
+    x_test_pos, x_test_neg = data['pos'], data['neg']
+    x_test = np.concatenate((x_test_pos, x_test_neg))
+    y_test = np.zeros((x_test.shape[0],2))
+    y_test[:x_test_pos.shape[0], 1] = 1
+    y_test[x_test_pos.shape[0]:,0] = 1
+    x_test = x_test.reshape(-1, width, hight, 1).astype('float32')
+    
+    x_train_pos, x_train_neg = gen_PDNA543_HHM(train_hhm, train_sites, traindatafile, ws=15)
+    data = np.load(traindatafile, allow_pickle='True')
+    x_train_pos, x_train_neg = data['pos'], data['neg']
     x_neg = resample(x_train_neg, n_samples=x_train_pos.shape[0], replace=False)
     x_train = np.concatenate((x_train_pos, x_neg))
     y_train = np.zeros((x_train.shape[0],2))
     y_train[:x_train_pos.shape[0],1] = 1
     y_train[x_train_pos.shape[0]:,0] = 1
-    x_train = x_train.reshape(-1, 23, 23, 1).astype('float32')
+    x_train = x_train.reshape(-1, width, hight, 1).astype('float32')
     x_train, y_train = shuffle(x_train, y_train)
     
+    return (x_train, y_train), (x_test, y_test)
 
+"""
+def load_PDNA543_hhm_xiaoInfo():
+    from dataset543 import gen_PDNA543_accXiaoInfo
+    from dataset543 import gen_PDNA543_HHM,readPDNA543_hhm_sites
+"""
 if __name__ == "__main__":
     #import numpy as np
     import os
@@ -204,7 +230,7 @@ if __name__ == "__main__":
     # setting the hyper parameters
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', default=100, type=int)
+    parser.add_argument('--batch_size', default=50, type=int)
     parser.add_argument('--epochs', default=30, type=int)
     parser.add_argument('--lam_recon', default=0.392, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
     parser.add_argument('--num_routing', default=3, type=int)  # num_routing should > 0
@@ -218,21 +244,39 @@ if __name__ == "__main__":
     print(args)
     if not os.path.exists(args.save_dir):
         os.makedirs(args.save_dir)
-
+        
     # load data
-    (x_train, y_train), (x_test, y_test) = load_pdna_543()
-
-    print("x_train.shape", x_train.shape)
-    # define model
-    model = CapsNet(input_shape=[21, 21, 1],
-                    n_class=len(np.unique(np.argmax(y_train, 1))),
-                    num_routing=args.num_routing)
-    model.summary()
-    #plot_model(model, to_file=args.save_dir+'/model.png', show_shapes=True)
-
-    train(model=model, data=((x_train, y_train), (x_test, y_test)), args=args)
-    test(model=model, data=(x_test, y_test))
+    (x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
+    y_pred = np.zeros(shape=(y_test.shape[0],))
+    ker=[3,5,7,9,11]
+    for k in range(5):
+        
+        print("predictor No.{}：x_train.shape：{}".format(k, x_train.shape))
+        # define model
+        model = CapsNet(input_shape=[width, hight, 1],
+                        n_class=len(np.unique(np.argmax(y_train, 1))),
+                        num_routing=args.num_routing, kernel_size=ker[k])
+        model.summary()
+        #plot_model(model, to_file=args.save_dir+'/model.png', show_shapes=True)
     
+        train(model=model, data=((x_train, y_train), (x_test, y_test)), args=args)
+    
+        y_p = test(model=model, data=(x_test, y_test))
+        y_pred = y_pred + y_p
+        K.clear_session()
+        tf.reset_default_graph()
+        (x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
+    
+    y_pred = y_pred/9
+    y_p = (y_pred>0.5).astype(float)
+    y_t = np.argmax(y_test,1)
+    print('Test Accuracy:', accuracy_score(y_t, y_p))
+    print('Test mattews-corrcoef', matthews_corrcoef(y_t, y_p))
+    """
+    当序列滑窗大小=21时（左右各11个氨基酸）上面输出结果为：
+    Test Accuracy: 0.9221280921721451
+    Test mattews-corrcoef 0.36118641755834363
+    """
     """
     # train or test
     if args.weights is not None:  # init the model weights with provided one
