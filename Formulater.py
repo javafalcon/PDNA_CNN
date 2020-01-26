@@ -41,13 +41,11 @@ class Formulater:
         return x    
     def accumulateXiaoInfo(self, seq):
         x = self.xiaoInfo(seq)
-        t = np.zeros(x.shape)
         arr = np.ones((5,)) * 0.5
         x = np.insert(x,0,arr,axis=0)
-        
-        for i in range(len(t)):
-            t[i] = (x[i] + x[i+1]) / 2
-        return t
+        for i in range(1, len(x)):
+            x[i] = (x[i-1] + x[i]) / 2
+        return x[1:]
     
     def phychem(self, seq):
         x = np.zeros(shape=(len(seq), 7))
