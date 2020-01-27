@@ -306,6 +306,10 @@ if __name__ == "__main__":
     HHM formulate sequence, 当序列滑窗大小=21时（左右各11个氨基酸）上面输出结果为：
     Test Accuracy: 0.9221280921721451
     Test mattews-corrcoef 0.36118641755834363
+    
+    HHM and accXiaoInfo features, slipwindown size=21:
+    Test Accuracy: 0.9265333785157573
+    Test mattews-corrcoef 0.36025566176611395    
     """
     """
     # train or test
