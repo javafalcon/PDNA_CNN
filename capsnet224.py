@@ -219,7 +219,7 @@ if __name__ == "__main__":
             # define model
             model = CapsNet(input_shape=x_train.shape[1:],
                             n_class=len(np.unique(np.argmax(y_train, 1))),
-                            num_routing=args.num_routing, kernel_size=kers[k])
+                            num_routing=args.num_routing, kernel_size=kers[j])
             model.summary()
             #plot_model(model, to_file=args.save_dir+'/model.png', show_shapes=True)
         
