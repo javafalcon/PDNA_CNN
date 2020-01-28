@@ -174,14 +174,14 @@ def load_PDNA543_accXiaoInfo():
     y_test = np.zeros((x_test.shape[0],2))
     y_test[:x_test_pos.shape[0], 1] = 1
     y_test[x_test_pos.shape[0]:,0] = 1
-    x_test = x_test.reshape(-1, width, hight, 1).astype('float32')
+    x_test = x_test.reshape(-1, x_test.shape[1], x_test.shape[2], 1).astype('float32')
     
     x_neg = resample(x_train_neg, n_samples=x_train_pos.shape[0], replace=False)
     x_train = np.concatenate((x_train_pos, x_neg))
     y_train = np.zeros((x_train.shape[0],2))
     y_train[:x_train_pos.shape[0], 1] = 1
     y_train[x_train_pos.shape[0]:, 0] = 1
-    x_train = x_train.reshape(-1, width, hight, 1).astype('float32')
+    x_train = x_train.reshape(-1, x_train.shape[1], x_train.shape[2], 1).astype('float32')
     x_train,y_train = shuffle(x_train, y_train)
        
     return (x_train, y_train), (x_test, y_test)
@@ -199,7 +199,7 @@ def load_PDNA543_hhm():
     y_test = np.zeros((x_test.shape[0],2))
     y_test[:x_test_pos.shape[0], 1] = 1
     y_test[x_test_pos.shape[0]:,0] = 1
-    x_test = x_test.reshape(-1, width, hight, 1).astype('float32')
+    x_test = x_test.reshape(-1, x_test.shape[1], x_test.shape[2], 1).astype('float32')
     
     x_train_pos, x_train_neg = gen_PDNA543_HHM(train_hhm, train_sites, traindatafile, ws=15)
     data = np.load(traindatafile, allow_pickle='True')
@@ -209,7 +209,7 @@ def load_PDNA543_hhm():
     y_train = np.zeros((x_train.shape[0],2))
     y_train[:x_train_pos.shape[0],1] = 1
     y_train[x_train_pos.shape[0]:,0] = 1
-    x_train = x_train.reshape(-1, width, hight, 1).astype('float32')
+    x_train = x_train.reshape(-1, x_train.shape[1], x_train.shape[2], 1).astype('float32')
     x_train, y_train = shuffle(x_train, y_train)
     
     return (x_train, y_train), (x_test, y_test)
@@ -254,9 +254,9 @@ if __name__ == "__main__":
     # setting the hyper parameters
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('--batch_size', default=50, type=int)
+    parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--epochs', default=30, type=int)
-    parser.add_argument('--lam_recon', default=0.392, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
+    parser.add_argument('--lam_recon', default=0.345, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
     parser.add_argument('--num_routing', default=3, type=int)  # num_routing should > 0
     parser.add_argument('--shift_fraction', default=0.1, type=float)
     parser.add_argument('--debug', default=0, type=int)  # debug>0 will save weights by TensorBoard
@@ -271,14 +271,14 @@ if __name__ == "__main__":
         
     # load data
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-    traindatafile = 'PDNA543_hhm_accxiaoinfo_11.npz'
-    testdatafile = 'PDNA543TEST_hhm_accxiaoinfo_11.npz'    
-    (x_train, y_train) = load_resampleTrain(traindatafile)
+    traindatafile = 'PDNA543_HHM_11.npz'
+    testdatafile = 'PDNA543TEST_HHM_11.npz'    
+    (x_train, y_train) = load_resampleTrain(traindatafile,9549)
     (x_test, y_test) = load_test(testdatafile)
     
     y_pred = np.zeros(shape=(y_test.shape[0],))
     ker=[3,5,7,9,11]
-    for k in range(5):
+    for k in range(len(ker)):
         
         print("predictor No.{}：x_train.shape：{}".format(k, x_train.shape))
         # define model
@@ -295,18 +295,13 @@ if __name__ == "__main__":
         K.clear_session()
         tf.reset_default_graph()
         #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-        (x_train, y_train) = load_resampleTrain(traindatafile)
+        (x_train, y_train) = load_resampleTrain(traindatafile,9549)
     
-    y_pred = y_pred/9
+    y_pred = y_pred/len(ker)
     y_p = (y_pred>0.5).astype(float)
     y_t = np.argmax(y_test,1)
     print('Test Accuracy:', accuracy_score(y_t, y_p))
     print('Test mattews-corrcoef', matthews_corrcoef(y_t, y_p))
-    """
-    HHM formulate sequence, 当序列滑窗大小=21时（左右各11个氨基酸）上面输出结果为：
-    Test Accuracy: 0.9221280921721451
-    Test mattews-corrcoef 0.36118641755834363
-    """
     """
     # train or test
     if args.weights is not None:  # init the model weights with provided one
