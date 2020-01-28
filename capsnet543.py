@@ -10,7 +10,7 @@ from keras import backend as K
 import tensorflow as tf
 #from keras.utils import to_categorical
 from capsulelayers import CapsuleLayer, PrimaryCap, Length, Mask
-from sklearn.metrics import accuracy_score, matthews_corrcoef
+from sklearn.metrics import accuracy_score, matthews_corrcoef,confusion_matrix
 from sklearn.utils import class_weight, shuffle, resample
 
 
@@ -273,7 +273,7 @@ if __name__ == "__main__":
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
     traindatafile = 'PDNA543_HHM_11.npz'
     testdatafile = 'PDNA543TEST_HHM_11.npz'    
-    (x_train, y_train) = load_resampleTrain(traindatafile,9549)
+    (x_train, y_train) = load_resampleTrain(traindatafile,9549*3)
     (x_test, y_test) = load_test(testdatafile)
     
     y_pred = np.zeros(shape=(y_test.shape[0],))
@@ -295,13 +295,14 @@ if __name__ == "__main__":
         K.clear_session()
         tf.reset_default_graph()
         #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-        (x_train, y_train) = load_resampleTrain(traindatafile,9549)
+        (x_train, y_train) = load_resampleTrain(traindatafile,9549*3)
     
     y_pred = y_pred/len(ker)
     y_p = (y_pred>0.5).astype(float)
     y_t = np.argmax(y_test,1)
     print('Test Accuracy:', accuracy_score(y_t, y_p))
     print('Test mattews-corrcoef', matthews_corrcoef(y_t, y_p))
+    print('Test confusion-matrix', confusion_matrix(y_t, y_p))
     """
     # train or test
     if args.weights is not None:  # init the model weights with provided one
