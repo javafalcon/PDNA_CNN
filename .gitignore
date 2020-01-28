@@ -3,6 +3,7 @@ result/
 __pycache__/
 PDNA224_PSSM/
 PDNA_Data/PDNA224_PSSM/
+PDNA_Data/PDNA224_hhm/
 PDNA_Data/PDNA543_hhm/
 PDNA_Data/PDNA543_hhsuite/
 PDNA_Data/PDNA543_PSSM/
