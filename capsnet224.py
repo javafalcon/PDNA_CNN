@@ -173,7 +173,7 @@ def build_resampleTrain(x_train_pos, x_train_neg, neg_samples=0):
     
     return (x_train, y_train)
 
-def writeMetrics(metrcisFile, y_true, predicted_Probability, noteInfo=''):
+def writeMetrics(metricsFile, y_true, predicted_Probability, noteInfo=''):
     predicts = np.array(predicted_Probability> 0.5).astype(int)
     predicts = predicts[:,0]
     labels = y_true[:,0]
@@ -218,7 +218,7 @@ if __name__ == "__main__":
     # load data
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
     traindatafile = 'PDNA224_HHM_11.npz'
-    N = 3778
+    N = 3022
     from dataset224 import load_kf_data
     
     (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=5)
@@ -227,13 +227,13 @@ if __name__ == "__main__":
     for i in range(5):
         (x_test, y_test) = build_test(kf_x_pos_test[i], kf_x_neg_test[i])
         
-        (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i])
+        (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N*2)
         
         y_pred = np.zeros(shape=(y_test.shape[0],2))
         kers=[3,5,7,9,11]
         for j in range(len(kers)):
             
-            print("predictor No.{}：x_train.shape：{}".format(j, x_train.shape))
+            print("predictor No.{}:x_train.shape:{}".format(j, x_train.shape))
             # define model
             model = CapsNet(input_shape=x_train.shape[1:],
                             n_class=len(np.unique(np.argmax(y_train, 1))),
@@ -248,14 +248,14 @@ if __name__ == "__main__":
             K.clear_session()
             tf.reset_default_graph()
  
-            (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i])
+            (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N*2)
     
         y_pred = y_pred/len(kers)
         writeMetrics('PDNA224_result.txt', y_test, y_pred, 'Fold-{} Predicted Metrics:'.format(i))
  
         y_ps = np.concatenate((y_ps, y_pred))
         y_ts = np.concatenate((y_ts, y_test))
-        writeMetrics('PDNA224_result.txt', y_ts, y_ps, 'Total Predicted Metrics:'.format(i))
+    writeMetrics('PDNA224_result.txt', y_ts, y_ps, 'Total Predicted Metrics:'.format(i))
     """
     # train or test
     if args.weights is not None:  # init the model weights with provided one
