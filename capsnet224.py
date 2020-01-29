@@ -140,15 +140,15 @@ def train(model, data, args):
     return model
 
 
-def test(model, data):
+def test(model, data, batch_size=100):
     x_test, y_test = data
-    y_pred, x_recon = model.predict([x_test, y_test], batch_size=100)
+    y_pred, x_recon = model.predict([x_test, y_test], batch_size=batch_size)
     print('-'*50)
     y_p = np.argmax(y_pred, 1)
     y_t = np.argmax(y_test,1)
     print('Test Accuracy:', accuracy_score(y_t, y_p))
     print('Test mattews-corrcoef', matthews_corrcoef(y_t, y_p))
-    return y_p
+    return y_pred
 
 
 def build_test(x_test_pos, x_test_neg):
@@ -229,7 +229,7 @@ if __name__ == "__main__":
         
         (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i])
         
-        y_pred = np.zeros(shape=(y_test.shape[0],))
+        y_pred = np.zeros(shape=(y_test.shape[0],2))
         kers=[3,5,7,9,11]
         for j in range(len(kers)):
             
@@ -252,9 +252,7 @@ if __name__ == "__main__":
     
         y_pred = y_pred/len(kers)
         writeMetrics('PDNA224_result.txt', y_test, y_pred, 'Fold-{} Predicted Metrics:'.format(i))
-        #y_p = (y_pred>0.5).astype(float)
-        #y_t = np.argmax(y_test,1)
-
+ 
         y_ps = np.concatenate((y_ps, y_pred))
         y_ts = np.concatenate((y_ts, y_test))
         writeMetrics('PDNA224_result.txt', y_ts, y_ps, 'Total Predicted Metrics:'.format(i))
