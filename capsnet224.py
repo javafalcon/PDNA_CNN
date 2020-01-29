@@ -171,6 +171,17 @@ def build_resampleTrain(x_train_pos, x_train_neg, neg_samples=0):
     x_train, y_train = shuffle(x_train, y_train)
     
     return (x_train, y_train)
+def writeInfo():
+    with open(metricsFile,'a') as fw:
+            fw.write(noteinfo + '\n')
+            for i in range(2):
+                fw.write(str(cm[i,0]) + "\t" +  str(cm[i,1]) + "\n" )
+            fw.write("ACC: %f "%accuracy_score(labels,prediction))
+            fw.write("\nF1: %f "%f1_score(labels,prediction))
+            fw.write("\nRecall: %f "%recall_score(labels,prediction))
+            fw.write("\nPre: %f "%precision_score(labels,prediction))
+            fw.write("\nMCC: %f "%matthews_corrcoef(labels,prediction))
+            fw.write("\nAUC: %f\n "%roc_auc_score(labels,predicted_Probability[:,0]))
 
 if __name__ == "__main__":
     #import numpy as np
@@ -204,7 +215,7 @@ if __name__ == "__main__":
     from dataset224 import load_kf_data
     
     (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=5)
-    y_preds, y_targs = np.zeros((0,1)), np.zeros((0,1))
+    y_ps, y_ts = np.zeros((0,1)), np.zeros((0,1))
     
     for i in range(5):
         (x_test, y_test) = build_test(kf_x_pos_test[i], kf_x_neg_test[i])
@@ -235,11 +246,15 @@ if __name__ == "__main__":
         y_pred = y_pred/len(kers)
         y_p = (y_pred>0.5).astype(float)
         y_t = np.argmax(y_test,1)
-        y_preds = np.concatenate((y_preds, y_p))
-        y_targs = np.concatenate((y_targs, y_t))
-    print('Test Accuracy:', accuracy_score(y_targs, y_preds))
-    print('Test mattews-corrcoef', matthews_corrcoef(y_targs, y_preds))
-    print('Test confusion-matrix', confusion_matrix(y_targs, y_preds))
+        print('Fold-:', i)
+        print('Test Accuracy:', accuracy_score(y_t, y_p))
+        print('Test mattews-corrcoef', matthews_corrcoef(y_t, y_p))
+
+        y_ps = np.concatenate((y_ps, y_p))
+        y_ts = np.concatenate((y_ts, y_t))
+    print('Test Accuracy:', accuracy_score(y_ts, y_ps))
+    print('Test mattews-corrcoef', matthews_corrcoef(y_ts, y_ps))
+    print('Test confusion-matrix', confusion_matrix(y_ts, y_ps))
     """
     # train or test
     if args.weights is not None:  # init the model weights with provided one
