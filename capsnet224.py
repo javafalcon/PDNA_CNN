@@ -11,6 +11,7 @@ import tensorflow as tf
 #from keras.utils import to_categorical
 from capsulelayers import CapsuleLayer, PrimaryCap, Length, Mask
 from sklearn.metrics import accuracy_score, matthews_corrcoef, confusion_matrix
+from sklearn.metrics import f1_score,roc_auc_score,recall_score,precision_score
 from sklearn.utils import class_weight, shuffle, resample
 
 
@@ -171,17 +172,23 @@ def build_resampleTrain(x_train_pos, x_train_neg, neg_samples=0):
     x_train, y_train = shuffle(x_train, y_train)
     
     return (x_train, y_train)
-def writeInfo():
+
+def writeMetrics(metrcisFile, y_true, predicted_Probability, noteInfo=''):
+    predicts = np.array(predicted_Probability> 0.5).astype(int)
+    predicts = predicts[:,0]
+    labels = y_true[:,0]
+    cm=confusion_matrix(labels,predicts)
     with open(metricsFile,'a') as fw:
-            fw.write(noteinfo + '\n')
-            for i in range(2):
-                fw.write(str(cm[i,0]) + "\t" +  str(cm[i,1]) + "\n" )
-            fw.write("ACC: %f "%accuracy_score(labels,prediction))
-            fw.write("\nF1: %f "%f1_score(labels,prediction))
-            fw.write("\nRecall: %f "%recall_score(labels,prediction))
-            fw.write("\nPre: %f "%precision_score(labels,prediction))
-            fw.write("\nMCC: %f "%matthews_corrcoef(labels,prediction))
-            fw.write("\nAUC: %f\n "%roc_auc_score(labels,predicted_Probability[:,0]))
+        if noteInfo:
+            fw.write(noteInfo + '\n')
+        for i in range(2):
+            fw.write(str(cm[i,0]) + "\t" +  str(cm[i,1]) + "\n" )
+        fw.write("ACC: %f "%accuracy_score(labels,predicts))
+        fw.write("\nF1: %f "%f1_score(labels,predicts))
+        fw.write("\nRecall: %f "%recall_score(labels,predicts))
+        fw.write("\nPre: %f "%precision_score(labels,predicts))
+        fw.write("\nMCC: %f "%matthews_corrcoef(labels,predicts))
+        fw.write("\nAUC: %f\n "%roc_auc_score(labels,predicted_Probability[:,0]))
 
 if __name__ == "__main__":
     #import numpy as np
@@ -215,7 +222,7 @@ if __name__ == "__main__":
     from dataset224 import load_kf_data
     
     (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=5)
-    y_ps, y_ts = np.zeros((0,1)), np.zeros((0,1))
+    y_ps, y_ts = np.zeros((0,2)), np.zeros((0,2))
     
     for i in range(5):
         (x_test, y_test) = build_test(kf_x_pos_test[i], kf_x_neg_test[i])
@@ -244,17 +251,13 @@ if __name__ == "__main__":
             (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i])
     
         y_pred = y_pred/len(kers)
-        y_p = (y_pred>0.5).astype(float)
-        y_t = np.argmax(y_test,1)
-        print('Fold-:', i)
-        print('Test Accuracy:', accuracy_score(y_t, y_p))
-        print('Test mattews-corrcoef', matthews_corrcoef(y_t, y_p))
+        writeMetrics('PDNA224_result.txt', y_test, y_pred, 'Fold-{} Predicted Metrics:'.format(i))
+        #y_p = (y_pred>0.5).astype(float)
+        #y_t = np.argmax(y_test,1)
 
-        y_ps = np.concatenate((y_ps, y_p))
-        y_ts = np.concatenate((y_ts, y_t))
-    print('Test Accuracy:', accuracy_score(y_ts, y_ps))
-    print('Test mattews-corrcoef', matthews_corrcoef(y_ts, y_ps))
-    print('Test confusion-matrix', confusion_matrix(y_ts, y_ps))
+        y_ps = np.concatenate((y_ps, y_pred))
+        y_ts = np.concatenate((y_ts, y_test))
+        writeMetrics('PDNA224_result.txt', y_ts, y_ps, 'Total Predicted Metrics:'.format(i))
     """
     # train or test
     if args.weights is not None:  # init the model weights with provided one
