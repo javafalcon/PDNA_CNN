@@ -218,7 +218,7 @@ if __name__ == "__main__":
     # load data
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
     traindatafile = 'PDNA224_HHM_11.npz'
-    N = 3022
+    N = 3022*3
     from dataset224 import load_kf_data
     
     (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=5)
@@ -227,7 +227,7 @@ if __name__ == "__main__":
     for i in range(5):
         (x_test, y_test) = build_test(kf_x_pos_test[i], kf_x_neg_test[i])
         
-        (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N*2)
+        (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N)
         
         y_pred = np.zeros(shape=(y_test.shape[0],2))
         kers=[3,5,7,9,11]
@@ -248,7 +248,7 @@ if __name__ == "__main__":
             K.clear_session()
             tf.reset_default_graph()
  
-            (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N*2)
+            (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N)
     
         y_pred = y_pred/len(kers)
         writeMetrics('PDNA224_result.txt', y_test, y_pred, 'Fold-{} Predicted Metrics:'.format(i))
