@@ -46,11 +46,16 @@ def CapsNet(input_shape, n_class, num_routing, kernel_size=7):
 
     # two-input-two-output keras Model
     return models.Model([x, y], [out_caps, x_recon])
-    """
-    return models.Model(inputs=x, outputs=out_caps)
-    """
-def mcc(y_true, y_pred):
-    return matthews_corrcoef(K.eval(K.argmax(y_true,1)), K.eval(K.argmax(y_pred,1)))
+    
+
+def semisup_margin_loss(y_true, y_pred):  
+    m = K.sum(y_true, axis=-1)
+    #return  K.switch(K.equal(K.sum(y_true), 0), 0., K.sum(K.categorical_crossentropy(K.tf.boolean_mask(y_true,m), K.tf.boolean_mask(y_pred,m), from_logits=True)) / K.sum(y_true))
+    t = K.tf.boolean_mask(y_true,m)
+    p = K.tf.boolean_mask(y_pred,m)
+    L = t * K.square(K.maximum(0.,0.9 - p)) + \
+        0.5 * (1 - t) * K.square(K.maximum(0., p - 0.1))
+    return  K.switch(K.equal(K.sum(y_true), 0), 0., K.mean(K.sum(L, 1)))
 
 def margin_loss(y_true, y_pred):
     """
@@ -92,7 +97,7 @@ def train(model, data, args):
                   metrics={'out_caps': mcc})
     """
     model.compile(optimizer=optimizers.Adam(lr=args.lr),
-                  loss=[margin_loss,'mse'],
+                  loss=[semisup_margin_loss,'mse'],
                   loss_weights=[1., args.lam_recon],
                   metrics={'out_caps': "accuracy"})
     
@@ -239,6 +244,21 @@ def load_resampleTrain(traindatafile, neg_samples=0):
     x_train, y_train = shuffle(x_train, y_train)
     
     return (x_train, y_train)
+
+def load_semisupTrain(traindatafile, neg_samples=0):
+    data = np.load(traindatafile, allow_pickle='True')
+    x_train_pos, x_train_neg = data['pos'], data['neg']
+    if neg_samples == 0:
+        neg_samples = x_train_pos.shape[0]
+    x_neg = resample(x_train_neg, n_samples=neg_samples, replace=False)
+    x_train = np.concatenate((x_train_pos, x_neg))
+    y_train = np.zeros((x_train.shape[0], 2))
+    y_train[:x_train_pos.shape[0], 1] = 1
+    y_train[x_train_pos.shape[0] : 2 * x_train_pos.shape[0], 0] = 1
+    x_train = x_train.reshape(-1, x_train.shape[1], x_train.shape[2], 1).astype('float32')
+    x_train, y_train = shuffle(x_train, y_train)
+    
+    return (x_train, y_train)
 """
 def load_PDNA543_hhm_xiaoInfo():
     from dataset543 import gen_PDNA543_accXiaoInfo
@@ -271,14 +291,14 @@ if __name__ == "__main__":
         
     # load data
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-    traindatafile = 'PDNA543_HHM_15.npz'
-    testdatafile = 'PDNA543TEST_HHM_15.npz'    
-    N = 9345*3
+    traindatafile = 'PDNA543_HHM_11.npz'
+    testdatafile = 'PDNA543TEST_HHM_11.npz'    
+    N = 9345*4
     (x_train, y_train) = load_resampleTrain(traindatafile,N)
     (x_test, y_test) = load_test(testdatafile)
     
     y_pred = np.zeros(shape=(y_test.shape[0],))
-    ker=[1,3,7,11,15]
+    ker=[3,5,7,9,11]
     for k in range(len(ker)):
         
         print("predictor No.{}：x_train.shape：{}".format(k, x_train.shape))
