@@ -256,7 +256,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=100, type=int)
     parser.add_argument('--epochs', default=30, type=int)
-    parser.add_argument('--lam_recon', default=0.345, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
+    parser.add_argument('--lam_recon', default=0.465, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
     parser.add_argument('--num_routing', default=3, type=int)  # num_routing should > 0
     parser.add_argument('--shift_fraction', default=0.1, type=float)
     parser.add_argument('--debug', default=0, type=int)  # debug>0 will save weights by TensorBoard
@@ -271,13 +271,14 @@ if __name__ == "__main__":
         
     # load data
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-    traindatafile = 'PDNA543_HHM_11.npz'
-    testdatafile = 'PDNA543TEST_HHM_11.npz'    
-    (x_train, y_train) = load_resampleTrain(traindatafile,9549*4)
+    traindatafile = 'PDNA543_HHM_15.npz'
+    testdatafile = 'PDNA543TEST_HHM_15.npz'    
+    N = 9345*3
+    (x_train, y_train) = load_resampleTrain(traindatafile,N)
     (x_test, y_test) = load_test(testdatafile)
     
     y_pred = np.zeros(shape=(y_test.shape[0],))
-    ker=[3,5,7,9,11]
+    ker=[1,3,7,11,15]
     for k in range(len(ker)):
         
         print("predictor No.{}：x_train.shape：{}".format(k, x_train.shape))
@@ -295,7 +296,7 @@ if __name__ == "__main__":
         K.clear_session()
         tf.reset_default_graph()
         #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-        (x_train, y_train) = load_resampleTrain(traindatafile,9549*4)
+        (x_train, y_train) = load_resampleTrain(traindatafile,N)
     
     y_pred = y_pred/len(ker)
     y_p = (y_pred>0.5).astype(float)
