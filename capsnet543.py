@@ -294,7 +294,7 @@ if __name__ == "__main__":
     traindatafile = 'PDNA543_HHM_11.npz'
     testdatafile = 'PDNA543TEST_HHM_11.npz'    
     N = 9345*4
-    (x_train, y_train) = load_resampleTrain(traindatafile,N)
+    (x_train, y_train) = load_semisupTrain(traindatafile,N)
     (x_test, y_test) = load_test(testdatafile)
     
     y_pred = np.zeros(shape=(y_test.shape[0],))
@@ -316,7 +316,7 @@ if __name__ == "__main__":
         K.clear_session()
         tf.reset_default_graph()
         #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-        (x_train, y_train) = load_resampleTrain(traindatafile,N)
+        (x_train, y_train) = load_semisupTrain(traindatafile,N)
     
     y_pred = y_pred/len(ker)
     y_p = (y_pred>0.5).astype(float)
