@@ -254,7 +254,7 @@ def load_semisupTrain(traindatafile, neg_samples=0):
     x_train = np.concatenate((x_train_pos, x_neg))
     y_train = np.zeros((x_train.shape[0], 2))
     y_train[:x_train_pos.shape[0], 1] = 1
-    y_train[x_train_pos.shape[0] : 2 * x_train_pos.shape[0], 0] = 1
+    y_train[x_train_pos.shape[0] : 3 * x_train_pos.shape[0], 0] = 1
     x_train = x_train.reshape(-1, x_train.shape[1], x_train.shape[2], 1).astype('float32')
     x_train, y_train = shuffle(x_train, y_train)
     
