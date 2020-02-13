@@ -111,4 +111,4 @@ def load_kf_data(benckmarkFile='PDNA224_hhm_11.npz', k=5):
     
 if __name__ == "__main__":
     (hhms,seqs,sites) = readPDNA224_hhm_seqs_sites()
-    x_pos, x_neg = gen_PDNA224_HHM(hhms,sites,'PDNA224_HHM_11.npz',11)
+    x_pos, x_neg = gen_PDNA224_HHM(hhms,sites,'PDNA224_HHM_15.npz',15)

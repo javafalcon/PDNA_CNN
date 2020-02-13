@@ -106,4 +106,58 @@ Recall: 0.960034
 Pre: 0.954404 
 MCC: 0.322565 
 AUC: 0.828009
+ Fold-0 Predicted Metrics:
+134	244
+185	5172
+ACC: 0.925196 
+F1: 0.960178 
+Recall: 0.965466 
+Pre: 0.954948 
+MCC: 0.346395 
+AUC: 0.841460
+ Total Predicted Metrics:
+134	244
+185	5172
+ACC: 0.925196 
+F1: 0.960178 
+Recall: 0.965466 
+Pre: 0.954948 
+MCC: 0.346395 
+AUC: 0.841460
+ Fold-0 Predicted Metrics:
+133	245
+226	5131
+ACC: 0.917873 
+F1: 0.956117 
+Recall: 0.957812 
+Pre: 0.954427 
+MCC: 0.317191 
+AUC: 0.846114
+ Total Predicted Metrics:
+133	245
+226	5131
+ACC: 0.917873 
+F1: 0.956117 
+Recall: 0.957812 
+Pre: 0.954427 
+MCC: 0.317191 
+AUC: 0.846114
+ Fold-0 Predicted Metrics:
+66	312
+65	5292
+ACC: 0.934263 
+F1: 0.965605 
+Recall: 0.987866 
+Pre: 0.944325 
+MCC: 0.269832 
+AUC: 0.846768
+ Total Predicted Metrics:
+66	312
+65	5292
+ACC: 0.934263 
+F1: 0.965605 
+Recall: 0.987866 
+Pre: 0.944325 
+MCC: 0.269832 
+AUC: 0.846768
  

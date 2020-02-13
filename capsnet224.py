@@ -160,10 +160,8 @@ def build_test(x_test_pos, x_test_neg):
     
     return  (x_test, y_test)
 
-def build_resampleTrain(x_train_pos, x_train_neg, neg_samples=0):
-    if neg_samples == 0:
-        neg_samples = x_train_pos.shape[0]
-    x_neg = resample(x_train_neg, n_samples=neg_samples, replace=False)
+def build_resampleTrain(x_train_pos, x_train_neg, neg_samples=1):
+    x_neg = resample(x_train_neg, n_samples=x_train_pos.shape[0]*neg_samples, replace=False)
     x_train = np.concatenate((x_train_pos, x_neg))
     y_train = np.zeros((x_train.shape[0],2))
     y_train[:x_train_pos.shape[0],1] = 1
@@ -217,20 +215,20 @@ if __name__ == "__main__":
         
     # load data
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-    traindatafile = 'PDNA224_HHM_11.npz'
-    N = 3022*3
+    traindatafile = 'PDNA224_HHM_15.npz'
+    
     from dataset224 import load_kf_data
     
-    (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=5)
+    (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=10)
     y_ps, y_ts = np.zeros((0,2)), np.zeros((0,2))
-    
-    for i in range(5):
+    N = 2
+    for i in range(1):
         (x_test, y_test) = build_test(kf_x_pos_test[i], kf_x_neg_test[i])
         
         (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N)
         
         y_pred = np.zeros(shape=(y_test.shape[0],2))
-        kers=[3,5,7,9,11]
+        kers=[1,3,5,7,9,11]
         for j in range(len(kers)):
             
             print("predictor No.{}:x_train.shape:{}".format(j, x_train.shape))
