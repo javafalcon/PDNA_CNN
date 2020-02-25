@@ -162,9 +162,11 @@ def build_resampleTrain(x_train_pos, x_train_neg, neg_samples=1):
     return (x_train, y_train)
 
 def writeMetrics(metricsFile, y_true, predicted_Probability, noteInfo=''):
-    predicts = np.array(predicted_Probability> 0.5).astype(int)
-    predicts = predicts[:,0]
-    labels = y_true[:,0]
+    #predicts = np.array(predicted_Probability> 0.5).astype(int)
+    #predicts = predicts[:,0]
+    #labels = y_true[:,0]
+    predicts = np.argmax(predicted_Probability, axis=1)
+    labels = np.argmax(y_true, axis=1)
     cm=confusion_matrix(labels,predicts)
     with open(metricsFile,'a') as fw:
         if noteInfo:
@@ -189,9 +191,9 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=100, type=int)
-    parser.add_argument('--epochs', default=15, type=int)
+    parser.add_argument('--epochs', default=10, type=int)
     parser.add_argument('--lam_recon', default=0.345, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
-    parser.add_argument('--num_routing', default=3, type=int)  # num_routing should > 0
+    parser.add_argument('--num_routing', default=9, type=int)  # num_routing should > 0
     parser.add_argument('--shift_fraction', default=0.1, type=float)
     parser.add_argument('--debug', default=0, type=int)  # debug>0 will save weights by TensorBoard
     parser.add_argument('--save_dir', default='./result/PDNA-543')
@@ -212,22 +214,23 @@ if __name__ == "__main__":
     (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=10)
     y_ps, y_ts = np.zeros((0,2)), np.zeros((0,2))
     
-    N, T = 0, 10
+    N = 1
     for i in range(1):
         (x_test, y_test) = build_test(kf_x_pos_test[i], kf_x_neg_test[i])
         
         (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N)
         
         y_pred = np.zeros(shape=(y_test.shape[0],2))
-        
+        kers = [1,3,5,7,9,11]
         # initial each sample weight as 1
         sample_weight = np.ones((y_train.shape[0],))
         # Adaboosting training
-        for j in range(T):
+        #for j in range(7):
+        for k in kers:
             # define model
             model = CapsNet(input_shape=x_train.shape[1:],
                             n_class=len(np.unique(np.argmax(y_train, 1))),
-                            num_routing=args.num_routing, kernel_size=7)
+                            num_routing=args.num_routing, kernel_size=k)
             model.summary()
             #plot_model(model, to_file=args.save_dir+'/model.png', show_shapes=True)
         

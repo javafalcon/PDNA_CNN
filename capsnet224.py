@@ -15,7 +15,9 @@ from sklearn.metrics import f1_score,roc_auc_score,recall_score,precision_score
 from sklearn.utils import class_weight, shuffle, resample
 
 
-def CapsNet(input_shape, n_class, num_routing, kernel_size=7):
+def CapsNet(input_shape, n_class, num_routing, 
+            conv_filters=128,kernel_size=7, padding='valid',
+            prim_cap_dim=16, dig_cap_dim=32):
     """
     A Capsule Network on PDNA-543.
     :param input_shape: data shape, 3d, [width, height, channels],for example:[21,28,1]
@@ -26,12 +28,12 @@ def CapsNet(input_shape, n_class, num_routing, kernel_size=7):
     x = layers.Input(shape=input_shape)
 
     # Layer 1: Just a conventional Conv2D layer
-    conv1 = layers.Conv2D(filters=128, kernel_size=kernel_size, strides=1, padding='valid', activation='relu', name='conv1')(x)
+    conv1 = layers.Conv2D(filters=conv_filters, kernel_size=kernel_size, strides=1, padding=padding, activation='relu', name='conv1')(x)
     # Layer 2: Conv2D layer with `squash` activation, then reshape to [None, num_capsule, dim_vector]
-    primarycaps = PrimaryCap(conv1, dim_vector=16, n_channels=32, kernel_size=kernel_size, strides=2, padding='valid')
+    primarycaps = PrimaryCap(conv1, dim_vector=prim_cap_dim, n_channels=dig_cap_dim, kernel_size=kernel_size, strides=2, padding=padding)
 
     # Layer 3: Capsule layer. Routing algorithm works here.
-    digitcaps = CapsuleLayer(num_capsule=n_class, dim_vector=32, num_routing=num_routing, name='digitcaps')(primarycaps)
+    digitcaps = CapsuleLayer(num_capsule=n_class, dim_vector=dig_cap_dim, num_routing=num_routing, name='digitcaps')(primarycaps)
 
     # Layer 4: This is an auxiliary layer to replace each capsule with its length. Just to match the true label's shape.
     # If using tensorflow, this will not be necessary. :)
@@ -172,9 +174,11 @@ def build_resampleTrain(x_train_pos, x_train_neg, neg_samples=1):
     return (x_train, y_train)
 
 def writeMetrics(metricsFile, y_true, predicted_Probability, noteInfo=''):
-    predicts = np.array(predicted_Probability> 0.5).astype(int)
-    predicts = predicts[:,0]
-    labels = y_true[:,0]
+    #predicts = np.array(predicted_Probability> 0.5).astype(int)
+    #predicts = predicts[:,0]
+    #labels = y_true[:,0]
+    predicts = np.argmax(predicted_Probability, axis=1)
+    labels = np.argmax(y_true, axis=1)
     cm=confusion_matrix(labels,predicts)
     with open(metricsFile,'a') as fw:
         if noteInfo:
@@ -199,9 +203,9 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=100, type=int)
-    parser.add_argument('--epochs', default=30, type=int)
+    parser.add_argument('--epochs', default=10, type=int)
     parser.add_argument('--lam_recon', default=0.345, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
-    parser.add_argument('--num_routing', default=3, type=int)  # num_routing should > 0
+    parser.add_argument('--num_routing', default=5, type=int)  # num_routing should > 0
     parser.add_argument('--shift_fraction', default=0.1, type=float)
     parser.add_argument('--debug', default=0, type=int)  # debug>0 will save weights by TensorBoard
     parser.add_argument('--save_dir', default='./result/PDNA-543')
@@ -215,27 +219,30 @@ if __name__ == "__main__":
         
     # load data
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-    traindatafile = 'PDNA224_HHM_15.npz'
+    traindatafile = 'PDNA224_HHM_7.npz'
     
     from dataset224 import load_kf_data
     
     (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=10)
     y_ps, y_ts = np.zeros((0,2)), np.zeros((0,2))
-    N = 2
+    N = 3
     for i in range(1):
         (x_test, y_test) = build_test(kf_x_pos_test[i], kf_x_neg_test[i])
         
         (x_train, y_train) = build_resampleTrain(kf_x_pos_train[i], kf_x_neg_train[i], neg_samples=N)
         
         y_pred = np.zeros(shape=(y_test.shape[0],2))
-        kers=[1,3,5,7,9,11]
+        kers=[1,3,5,7,9,11,15]
         for j in range(len(kers)):
-            
+        #for j in range(11):    
             print("predictor No.{}:x_train.shape:{}".format(j, x_train.shape))
             # define model
             model = CapsNet(input_shape=x_train.shape[1:],
                             n_class=len(np.unique(np.argmax(y_train, 1))),
-                            num_routing=args.num_routing, kernel_size=kers[j])
+                            num_routing=args.num_routing, kernel_size=kers[j], 
+                            padding='same', prim_cap_dim=8, 
+                            dig_cap_dim=16, conv_filters=32
+                            )
             model.summary()
             #plot_model(model, to_file=args.save_dir+'/model.png', show_shapes=True)
         
