@@ -160,4 +160,22 @@ Recall: 0.987866
 Pre: 0.944325 
 MCC: 0.269832 
 AUC: 0.846768
+ Fold-0 Predicted Metrics:
+0	378
+0	5357
+ACC: 0.934089 
+F1: 0.965921 
+Recall: 1.000000 
+Pre: 0.934089 
+MCC: 0.000000 
+AUC: 0.844749
+ Total Predicted Metrics:
+0	378
+0	5357
+ACC: 0.934089 
+F1: 0.965921 
+Recall: 1.000000 
+Pre: 0.934089 
+MCC: 0.000000 
+AUC: 0.844749
  

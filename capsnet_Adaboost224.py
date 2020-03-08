@@ -212,7 +212,8 @@ if __name__ == "__main__":
     (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  = load_kf_data(benckmarkFile=traindatafile,k=10)
     y_ps, y_ts = np.zeros((0,2)), np.zeros((0,2))
     
-    N, T = 0, 10
+    N = 0
+    kerls = [1,3,5,7,9,11,13]
     for i in range(1):
         (x_test, y_test) = build_test(kf_x_pos_test[i], kf_x_neg_test[i])
         
@@ -222,12 +223,13 @@ if __name__ == "__main__":
         
         # initial each sample weight as 1
         sample_weight = np.ones((y_train.shape[0],))
+        
         # Adaboosting training
-        for j in range(T):
+        for j in range(len(kerls)):
             # define model
             model = CapsNet(input_shape=x_train.shape[1:],
                             n_class=len(np.unique(np.argmax(y_train, 1))),
-                            num_routing=args.num_routing, kernel_size=7)
+                            num_routing=args.num_routing, kernel_size=kerls[j])
             model.summary()
             #plot_model(model, to_file=args.save_dir+'/model.png', show_shapes=True)
         
@@ -247,14 +249,4 @@ if __name__ == "__main__":
         y_ps = np.concatenate((y_ps, y_pred))
         y_ts = np.concatenate((y_ts, y_test))
     writeMetrics('PDNA224_result.txt', y_ts, y_ps, 'Total Predicted Metrics:'.format(i))
-    """
-    # train or test
-    if args.weights is not None:  # init the model weights with provided one
-        model.load_weights(args.weights)
-    if args.is_training:
-        train(model=model, data=((x_train, y_train), (x_test, y_test)), args=args)
-    else:  # as long as weights are given, will run testing
-        if args.weights is None:
-            print('No weights are provided. Will test using random initialized weights.')
-        test(model=model, data=(x_test, y_test))
-   """
+    

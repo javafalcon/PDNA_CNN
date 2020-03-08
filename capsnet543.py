@@ -275,9 +275,9 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--batch_size', default=100, type=int)
-    parser.add_argument('--epochs', default=30, type=int)
+    parser.add_argument('--epochs', default=15, type=int)
     parser.add_argument('--lam_recon', default=0.465, type=float)  # 784 * 0.0005, paper uses sum of SE, here uses MSE
-    parser.add_argument('--num_routing', default=3, type=int)  # num_routing should > 0
+    parser.add_argument('--num_routing', default=9, type=int)  # num_routing should > 0
     parser.add_argument('--shift_fraction', default=0.1, type=float)
     parser.add_argument('--debug', default=0, type=int)  # debug>0 will save weights by TensorBoard
     parser.add_argument('--save_dir', default='./result/PDNA-543')
