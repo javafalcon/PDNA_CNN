@@ -1,156 +1,58 @@
-Fold-0 Predicted Metrics:
-333	423
-675	10039
-ACC: 0.904272 
-F1: 0.948149 
-Recall: 0.936998 
-Pre: 0.959568 
-MCC: 0.330816 
-AUC: 0.835530
- Fold-1 Predicted Metrics:
-372	384
-836	9878
-ACC: 0.893636 
-F1: 0.941838 
-Recall: 0.921971 
-Pre: 0.962580 
-MCC: 0.334676 
-AUC: 0.847026
- Fold-2 Predicted Metrics:
-339	417
-670	10044
-ACC: 0.905231 
-F1: 0.948666 
-Recall: 0.937465 
-Pre: 0.960138 
-MCC: 0.338029 
-AUC: 0.835708
- Fold-3 Predicted Metrics:
-317	438
-678	10036
-ACC: 0.902694 
-F1: 0.947329 
-Recall: 0.936718 
-Pre: 0.958182 
-MCC: 0.314156 
-AUC: 0.824179
- Fold-4 Predicted Metrics:
-315	440
-646	10068
-ACC: 0.905310 
-F1: 0.948827 
-Recall: 0.939705 
-Pre: 0.958127 
-MCC: 0.319450 
-AUC: 0.819665
- Total Predicted Metrics:
-1676	2102
-3505	50065
-ACC: 0.902228 
-F1: 0.946972 
-Recall: 0.934572 
-Pre: 0.959706 
-MCC: 0.327265 
-AUC: 0.832392
+ker=5, num of ensemble classify=7
+Total Predicted Metrics:
+164	214
+259	5098
+ACC: 0.917524 
+F1: 0.955666 
+Recall: 0.951652 
+Pre: 0.959714 
+MCC: 0.365972 
+AUC: 0.862198
  Fold-0 Predicted Metrics:
-241	515
-384	10330
-ACC: 0.921622 
-F1: 0.958300 
-Recall: 0.964159 
-Pre: 0.952513 
-MCC: 0.309300 
-AUC: 0.831599
- Fold-1 Predicted Metrics:
-314	442
-506	10208
-ACC: 0.917350 
-F1: 0.955626 
-Recall: 0.952772 
-Pre: 0.958498 
-MCC: 0.354519 
-AUC: 0.845255
- Fold-2 Predicted Metrics:
-271	485
-420	10294
-ACC: 0.921099 
-F1: 0.957893 
-Recall: 0.960799 
-Pre: 0.955005 
-MCC: 0.332935 
-AUC: 0.829761
- Fold-3 Predicted Metrics:
-264	491
-455	10259
-ACC: 0.917517 
-F1: 0.955926 
-Recall: 0.957532 
-Pre: 0.954326 
-MCC: 0.314270 
-AUC: 0.817742
- Fold-4 Predicted Metrics:
-231	524
-376	10338
-ACC: 0.921528 
-F1: 0.958287 
-Recall: 0.964906 
-Pre: 0.951758 
-MCC: 0.300023 
-AUC: 0.816046
+52	326
+41	5316
+ACC: 0.936007 
+F1: 0.966633 
+Recall: 0.992346 
+Pre: 0.942219 
+MCC: 0.255211 
+AUC: 0.854008
  Total Predicted Metrics:
-1321	2457
-2141	51429
-ACC: 0.919823 
-F1: 0.957210 
-Recall: 0.960034 
-Pre: 0.954404 
-MCC: 0.322565 
-AUC: 0.828009
- Fold-0 Predicted Metrics:
-134	244
-185	5172
-ACC: 0.925196 
-F1: 0.960178 
-Recall: 0.965466 
-Pre: 0.954948 
-MCC: 0.346395 
-AUC: 0.841460
+52	326
+41	5316
+ACC: 0.936007 
+F1: 0.966633 
+Recall: 0.992346 
+Pre: 0.942219 
+MCC: 0.255211 
+AUC: 0.854008
+#########################################Fold-0 Predicted Metrics:
+44	334
+37	5320
+ACC: 0.935310 
+F1: 0.966306 
+Recall: 0.993093 
+Pre: 0.940927 
+MCC: 0.230240 
+AUC: 0.849582
  Total Predicted Metrics:
-134	244
-185	5172
-ACC: 0.925196 
-F1: 0.960178 
-Recall: 0.965466 
-Pre: 0.954948 
-MCC: 0.346395 
-AUC: 0.841460
+44	334
+37	5320
+ACC: 0.935310 
+F1: 0.966306 
+Recall: 0.993093 
+Pre: 0.940927 
+MCC: 0.230240 
+AUC: 0.849582
  Fold-0 Predicted Metrics:
-133	245
-226	5131
-ACC: 0.917873 
-F1: 0.956117 
-Recall: 0.957812 
-Pre: 0.954427 
-MCC: 0.317191 
-AUC: 0.846114
- Total Predicted Metrics:
-133	245
-226	5131
-ACC: 0.917873 
-F1: 0.956117 
-Recall: 0.957812 
-Pre: 0.954427 
-MCC: 0.317191 
-AUC: 0.846114
- Fold-0 Predicted Metrics:
-66	312
-65	5292
-ACC: 0.934263 
-F1: 0.965605 
-Recall: 0.987866 
-Pre: 0.944325 
-MCC: 0.269832 
-AUC: 0.846768
+5101	256
+206	172
+ACC: 0.919442 
+F1: 0.426799 
+Recall: 0.455026 
+Pre: 0.401869 
+MCC: 0.384511 
+AUC: 0.135560
  Total Predicted Metrics:
 66	312
 65	5292
