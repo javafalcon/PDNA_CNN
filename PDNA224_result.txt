@@ -81,3 +81,50 @@ Pre: 0.934089
 MCC: 0.000000 
 AUC: 0.844749
  
+Concatenate server kernels((3,7,9,11,9)-(3,3,3,3,3)). Fold-0 Predicted Metrics:
+5140	217
+229	149
+ACC: 0.922232 
+F1: 0.400538 
+Recall: 0.394180 
+Pre: 0.407104 
+MCC: 0.359021 
+AUC: 0.154766
+ 
+Concatenate server kernels(3,7,9,11,15). Fold-0 Predicted Metrics:
+0	5357
+0	378
+ACC: 0.065911 
+F1: 0.123671 
+Recall: 1.000000 
+Pre: 0.065911 
+MCC: 0.000000 
+AUC: 0.497179
+ Concatenate server kernels(3,7,9,11,15). Fold-0 Predicted Metrics:
+4948	409
+182	196
+ACC: 0.896949 
+F1: 0.398779 
+Recall: 0.518519 
+Pre: 0.323967 
+MCC: 0.357157 
+AUC: 0.146969
+ Concatenate server kernels(3,7,9,11,15). Fold-0 Predicted Metrics:
+4972	385
+188	190
+ACC: 0.900087 
+F1: 0.398741 
+Recall: 0.502646 
+Pre: 0.330435 
+MCC: 0.355877 
+AUC: 0.157884
+ Concatenate server kernels(3,7,9,11,15). Fold-0 Predicted Metrics:
+5057	300
+211	167
+ACC: 0.910898 
+F1: 0.395266 
+Recall: 0.441799 
+Pre: 0.357602 
+MCC: 0.350013 
+AUC: 0.146532
+ 
