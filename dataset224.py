@@ -91,6 +91,31 @@ def gen_PDNA224_HHM(x_hhm:dict, y_sites:dict, datafile:str, ws=11):
         np.savez(datafile, pos=x_pos, neg=x_neg)            
         return np.array(x_pos), np.array(x_neg)
 
+def gen_PDNA224_OneHot(datafile, ws=15, col=20):
+    from util import onehot
+    import os
+    if os.path.exists(datafile):
+        data = np.load(datafile, allow_pickle='True')
+        return data['pos'], data['neg']
+    seqs, sits = readPDNA224()
+    x_pos, x_neg = [], []
+    enstr = '#'*ws
+    for key in seqs.keys():
+        site = sits[key]
+        seq = seqs[key]
+        n = len(seq)
+        seq = enstr + seq + enstr
+        
+        for i in range(ws, ws+n):
+            s = seq[i-ws:i+ws+1]
+            x = onehot(seq, 2*ws+1, col)
+            if i-ws+1 in site:
+                x_pos.append(x)
+            else:
+                x_neg.append(x)
+                
+    np.savez(datafile, pos=x_pos, neg=x_neg)
+    return np.array(x_pos), np.array(x_neg)
 def load_kf_data(benckmarkFile='PDNA224_hhm_11.npz', k=5):
     from sklearn.model_selection import KFold
     data = np.load(benckmarkFile, allow_pickle='True')
@@ -110,5 +135,6 @@ def load_kf_data(benckmarkFile='PDNA224_hhm_11.npz', k=5):
     return (kf_x_pos_train, kf_x_neg_train), (kf_x_pos_test, kf_x_neg_test)  
     
 if __name__ == "__main__":
-    (hhms,seqs,sites) = readPDNA224_hhm_seqs_sites()
-    x_pos, x_neg = gen_PDNA224_HHM(hhms,sites,'PDNA224_HHM_7.npz',7)
+    #(hhms,seqs,sites) = readPDNA224_hhm_seqs_sites()
+    #x_pos, x_neg = gen_PDNA224_HHM(hhms,sites,'PDNA224_HHM_7.npz',7)
+    x_pos, x_neg = gen_PDNA224_OneHot('PDNA224_OneHot_7.npz',7,20)
