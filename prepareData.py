@@ -5,9 +5,6 @@ Created on Mon Dec  9 12:57:47 2019
 @author: Administrator
 """
 import numpy as np
-from tools import aa2code
-import re
-from sklearn.utils import shuffle
 from sklearn.model_selection import KFold
 # 读入PDNA-62数据集.返回蛋白质序列及其dna结合位点在序列中的序号（从1开始计数）
 def readPDNA62():
@@ -150,7 +147,8 @@ Param:
  posseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列
  negseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列   
 """
-def buildBenchmarkDataset2(pseqs:dict, psites:dict, windown_wise:int, npzfile:str):
+def buildBenchmarkDataset2(pseqs:dict, psites:dict, 
+                           windown_wise:int, npzfile:str):
    posseqs, negseqs = list(), list()
    for key in pseqs.keys():
        seq = pseqs[key]
@@ -186,7 +184,8 @@ Param:
  posseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列
  negseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列   
 """    
-def buildBenchmarkDataset(pseqs:dict, psites:dict, windown_wise:int, npzfile):
+def buildBenchmarkDataset(pseqs:dict, psites:dict, 
+                          windown_wise:int, npzfile):
     keys = pseqs.keys()
     posseqs, negseqs = [], []
     for key in keys:
@@ -251,8 +250,9 @@ if __name__ == "__main__":
     #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')   
     #buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
     #buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
-    (x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
-    
+    #(x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
+    (train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
+    buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
     
     
     
