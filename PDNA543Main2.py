@@ -8,13 +8,20 @@ Created on Mon May  4 20:07:00 2020
 from prepareData import readPDNA543_seqs_sites
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras import layers, models, optimizers, callbacks, backend
+from tensorflow.keras import layers, models, optimizers, callbacks
+from resnet import resnet_v1
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau, ModelCheckpoint
+import os
+
 from Capsule import CapsuleLayer, squash, Length, Mask, margin_loss
 from tensorflow.keras.utils import to_categorical   
-from numpy.random import default_rng
-from sklearn.metrics import accuracy_score, matthews_corrcoef,confusion_matrix
 
-row, col, step = 12, 20, 8
+from sklearn.metrics import accuracy_score, matthews_corrcoef,confusion_matrix
+from sklearn.utils import shuffle
+from util import pcaval
+
+row, col, step = 21, 21, 8
 def slipSeqs(seqs:dict, sites:dict, windown_size=10, step=7): 
     # 按步长step滑窗，滑窗大小windown_size
     # 使得相邻的两个序列片段重复windown_size - step个氨基酸
@@ -42,7 +49,8 @@ def slipSeqs(seqs:dict, sites:dict, windown_size=10, step=7):
                 neg_seqs.append( seq[start:end])
                 
     return (pos_seqs, targets, neg_seqs)
- 
+
+
 def onehotSeqs(seqs):
     amino_acids = "ACDEFHIGKLMNQPRSTVWY"
     X = list()
@@ -57,24 +65,35 @@ def onehotSeqs(seqs):
         X.append(x)
     return np.array(X)
 
-def load_data():
-     # train_seqs, train_sites, test_seqs, test_sites是字典类型，key是蛋白质id
-    (train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
-    train_pos_seqs, train_targets, train_neg_seqs = slipSeqs(train_seqs, train_sites, row, step)
-    test_pos_seqs, test_targets, test_neg_seqs = slipSeqs(test_seqs, test_sites, row, step)   
-    train_pos_X = onehotSeqs(train_pos_seqs)
-    train_neg_X = onehotSeqs(train_neg_seqs)
-    X_train = np.concatenate((train_pos_X, train_neg_X))
+def load_TrainData():
+    data = np.load('PDNA_Data\\PDNA_543_train_10.npz')
+    train_pos_seqs = data['pos'] 
+    train_neg_seqs = data['neg']
+    #train_pos_X = onehotSeqs(train_pos_seqs)
+    #train_neg_X = onehotSeqs(train_neg_seqs)
+    train_pos_X = pcaval(train_pos_seqs)
+    train_neg_X = pcaval(train_neg_seqs)
+    train_neg_X = shuffle(train_neg_X)
+    
+    X_train = np.concatenate((train_pos_X, train_neg_X[:int(len(train_pos_X)*1.2)]))
     y_train = np.zeros((len(X_train),))
     y_train[:len(train_pos_X)] = 1.
-    
-    test_pos_X = onehotSeqs(test_pos_seqs)
-    test_neg_X = onehotSeqs(test_neg_seqs)
+
+    return (X_train, y_train)
+
+def load_TestData():
+    data = np.load('PDNA_Data\\PDNA_543_test_10.npz')
+    test_pos_seqs = data['pos'] 
+    test_neg_seqs = data['neg']
+    #test_pos_X = onehotSeqs(test_pos_seqs)
+    #test_neg_X = onehotSeqs(test_neg_seqs)
+    test_pos_X = pcaval(test_pos_seqs)
+    test_neg_X = pcaval(test_neg_seqs)
     X_test = np.concatenate((test_pos_X, test_neg_X))
     y_test = np.zeros((len(X_test),))
     y_test[:len(test_pos_X)] = 1.
     
-    return (X_train, y_train), (X_test, y_test), (train_targets, test_targets)
+    return (X_test, y_test)
 
 def PrimaryCap(inputs, dim_vector, n_channels, kernel_size, strides, padding):
     output = layers.Conv2D(filters=dim_vector*n_channels, kernel_size=kernel_size,
@@ -87,9 +106,13 @@ def PrimaryCap(inputs, dim_vector, n_channels, kernel_size, strides, padding):
 
 def CapsNet(input_shape, n_class, num_routing):
     x = layers.Input(shape=input_shape)
-    conv1 = layers.Conv2D(filters=256, kernel_size=3, strides=1, padding='valid',
+    conv1 = layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='same',
                          activation='relu', name='conv1')(x)
-    primarycaps = PrimaryCap(conv1, dim_vector=8, n_channels=32, kernel_size=3, 
+    conv2 = layers.Conv2D(filters=128, kernel_size=3, strides=1, padding='same',
+                         activation='relu', name='conv2')(conv1)
+    conv3 = layers.Conv2D(filters=256, kernel_size=3, strides=1, padding='valid',
+                         activation='relu', name='conv3')(conv2)
+    primarycaps = PrimaryCap(conv3, dim_vector=8, n_channels=32, kernel_size=5, 
                             strides=2, padding='valid')
     digitcaps = CapsuleLayer(num_capsule=n_class, dim_vector=16, num_routing=num_routing,
                             name='digitcaps')(primarycaps)
@@ -168,66 +191,67 @@ def lr_schedule(epoch):
 
                 
 if __name__ == "__main__":
-    (X_train, train_y), (X_test, test_y), (train_targets, test_targets) = load_data()
+    (X_test, test_y) = load_TestData()
+    y_pred = np.zeros(shape=(test_y.shape[0],))
+    ls_pred = []
+    K = 13
+    for _ in range(K):
+        (X_train, train_y) = load_TrainData()
+            
+        train_X = X_train.reshape(-1,row,col,1)
+        test_X = X_test.reshape(-1,row,col,1)
+        y_train = to_categorical(train_y, num_classes=2)
+        y_test = to_categorical(test_y, num_classes=2)
+        tf.keras.backend.clear_session()
+        model = CapsNet(input_shape=[row,col,1], n_class=2, num_routing=5)
+        #model = CnnNet(input_shape=[row,col,1], n_class=2)
+        #model = resnet_v1(input_shape=[row,col,1],depth=20, num_classes=2)
+        model.summary()
         
-    train_X = X_train.reshape(-1,row,col,1)
-    test_X = X_test.reshape(-1,row,col,1)
-    y_train = to_categorical(train_y, num_classes=2)
-    y_test = to_categorical(test_y, num_classes=2)
-    tf.keras.backend.clear_session()
-    #model = CapsNet(input_shape=[row,col,1], n_class=2, num_routing=5)
-    #model = CnnNet(input_shape=[row,col,1], n_class=2)
-    from resnet import resnet_v1
-    from tensorflow.keras.optimizers import Adam
-    from tensorflow.keras.callbacks import LearningRateScheduler, ReduceLROnPlateau, ModelCheckpoint
-    import os
-    model = resnet_v1(input_shape=[row,col,1],depth=20, num_classes=2)
-    model.summary()
-    
-    lr_scheduler = LearningRateScheduler(lr_schedule)
-    lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5,
-                                   min_lr=0.5e-6)
-    model.compile(loss='categorical_crossentropy',
-                  optimizer=Adam(learning_rate=lr_schedule(0)),
-                  metrics=['accuracy'])
-    
-    save_dir = os.path.join(os.getcwd(), 'save_models')
-    model_name = 'mnist_resnet_model.{epoch:02d}.h5'
-    if not os.path.isdir(save_dir):
-        os.makedirs(save_dir)
-    filepath = os.path.join(save_dir, model_name)    
-    checkpoint = ModelCheckpoint(filepath=filepath, monitor='val_acc',
-                                verbose=1, save_best_only=True)
-    callbacks = [checkpoint, lr_reducer, lr_scheduler]
-    
-    model.fit(train_X, y_train,
-              batch_size=100,
-              epochs=20,
-              validation_data=(test_X,y_test),
-              shuffle=True,
-              callbacks=callbacks)
-    
-    y_pred = model.predict(test_X)
-    
-    y_pred = np.argmax(y_pred, 1)
-    
-    #scores = model.evaluate(test_X, y_test, verbose=1)
-    #print('Test loss:', scores[0])
-    #print('Test accuracy:', scores[1])
-    '''
-    y_p = randomDeepNets(model, ((train_X, y_train), (test_X, y_test)), 
-                            nNet=50, seed=12345, batch_size=100)
-    y_pred = (y_p>0.5).astype(float)
-    
-    y_pred = trainAndTest(model, ((train_X, y_train), (test_X, y_test)),
-                     lr=0.001, lam_recon=0.35, batch_size=100, epochs=10)
-    '''
-    
+        lr_scheduler = LearningRateScheduler(lr_schedule)
+        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5,
+                                       min_lr=0.5e-6)
+        '''
+        model.compile(loss='categorical_crossentropy',
+                      optimizer=Adam(learning_rate=lr_schedule(0)),
+                      metrics=['accuracy'])
+        '''
+        
+        # compile just for capsul
+        model.compile(optimizer=optimizers.Adam(learning_rate=lr_schedule(0)),
+                 loss=[margin_loss, 'mse'],
+                 loss_weights=[1., 0.325],
+                 metrics={'out_caps': 'accuracy'})
+        
+        save_dir = os.path.join(os.getcwd(), 'save_models')
+        model_name = 'capsul_model.{epoch:02d}.h5'
+        if not os.path.isdir(save_dir):
+            os.makedirs(save_dir)
+        filepath = os.path.join(save_dir, model_name)    
+        checkpoint = ModelCheckpoint(filepath=filepath, monitor='val_acc',
+                                    verbose=1, save_best_only=True)
+        callbacks = [checkpoint, lr_reducer, lr_scheduler]
+        
+        # fit just for capsul
+        model.fit([train_X, y_train], [y_train, train_X],
+                  batch_size=100,
+                  epochs=15,
+                  validation_data=[[test_X, y_test], [y_test, test_X]],
+                  shuffle=True,
+                  callbacks=callbacks)
+        
+        pred, _ = model.predict([test_X, y_test])
+        
+        y_pred += np.argmax(pred, 1)
+        
+        ls_pred.append(y_pred)
+        
+    y_pred = y_pred/K
+    y_pred = (y_pred>0.5).astype(float)
     print('Test Accuracy:', accuracy_score(test_y, y_pred))
     print('Test mattews-corrcoef', matthews_corrcoef(test_y, y_pred))
     print('Test confusion-matrix', confusion_matrix(test_y, y_pred))
     
-
 
                 
                 
