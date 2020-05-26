@@ -21,7 +21,7 @@ from sklearn.metrics import accuracy_score, matthews_corrcoef,confusion_matrix
 from sklearn.utils import shuffle
 from util import pcaval
 
-row, col, step = 21, 21, 8
+row, col, step = 11, 21, 8
 def slipSeqs(seqs:dict, sites:dict, windown_size=10, step=7): 
     # 按步长step滑窗，滑窗大小windown_size
     # 使得相邻的两个序列片段重复windown_size - step个氨基酸
@@ -66,7 +66,7 @@ def onehotSeqs(seqs):
     return np.array(X)
 
 def load_TrainData():
-    data = np.load('PDNA_Data\\PDNA_543_train_10.npz')
+    data = np.load('PDNA_Data\\PDNA_543_train_5.npz')
     train_pos_seqs = data['pos'] 
     train_neg_seqs = data['neg']
     #train_pos_X = onehotSeqs(train_pos_seqs)
@@ -75,14 +75,14 @@ def load_TrainData():
     train_neg_X = pcaval(train_neg_seqs)
     train_neg_X = shuffle(train_neg_X)
     
-    X_train = np.concatenate((train_pos_X, train_neg_X[:int(len(train_pos_X)*1.2)]))
+    X_train = np.concatenate((train_pos_X, train_neg_X[:int(len(train_pos_X))]))
     y_train = np.zeros((len(X_train),))
     y_train[:len(train_pos_X)] = 1.
 
     return (X_train, y_train)
 
 def load_TestData():
-    data = np.load('PDNA_Data\\PDNA_543_test_10.npz')
+    data = np.load('PDNA_Data\\PDNA_543_test_5.npz')
     test_pos_seqs = data['pos'] 
     test_neg_seqs = data['neg']
     #test_pos_X = onehotSeqs(test_pos_seqs)
@@ -104,15 +104,17 @@ def PrimaryCap(inputs, dim_vector, n_channels, kernel_size, strides, padding):
     return layers.Lambda(squash, name='primarycap_squash')(outputs)
 
 
-def CapsNet(input_shape, n_class, num_routing):
+def CapsNet(input_shape, kerl, n_class, num_routing):
     x = layers.Input(shape=input_shape)
-    conv1 = layers.Conv2D(filters=64, kernel_size=3, strides=1, padding='same',
+    conv1 = layers.Conv2D(filters=256, kernel_size=kerl, strides=1, padding='valid',
                          activation='relu', name='conv1')(x)
+    '''
     conv2 = layers.Conv2D(filters=128, kernel_size=3, strides=1, padding='same',
                          activation='relu', name='conv2')(conv1)
     conv3 = layers.Conv2D(filters=256, kernel_size=3, strides=1, padding='valid',
                          activation='relu', name='conv3')(conv2)
-    primarycaps = PrimaryCap(conv3, dim_vector=8, n_channels=32, kernel_size=5, 
+    '''
+    primarycaps = PrimaryCap(conv1, dim_vector=8, n_channels=32, kernel_size=kerl, 
                             strides=2, padding='valid')
     digitcaps = CapsuleLayer(num_capsule=n_class, dim_vector=16, num_routing=num_routing,
                             name='digitcaps')(primarycaps)
@@ -194,7 +196,7 @@ if __name__ == "__main__":
     (X_test, test_y) = load_TestData()
     y_pred = np.zeros(shape=(test_y.shape[0],))
     ls_pred = []
-    K = 13
+    K = 9
     for _ in range(K):
         (X_train, train_y) = load_TrainData()
             
@@ -203,7 +205,7 @@ if __name__ == "__main__":
         y_train = to_categorical(train_y, num_classes=2)
         y_test = to_categorical(test_y, num_classes=2)
         tf.keras.backend.clear_session()
-        model = CapsNet(input_shape=[row,col,1], n_class=2, num_routing=5)
+        model = CapsNet(input_shape=[row,col,1],kerl=5, n_class=2, num_routing=5)
         #model = CnnNet(input_shape=[row,col,1], n_class=2)
         #model = resnet_v1(input_shape=[row,col,1],depth=20, num_classes=2)
         model.summary()
