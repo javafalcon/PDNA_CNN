@@ -5,9 +5,6 @@ Created on Mon Dec  9 12:57:47 2019
 @author: Administrator
 """
 import numpy as np
-from tools import aa2code
-import re
-from sklearn.utils import shuffle
 from sklearn.model_selection import KFold
 # 读入PDNA-62数据集.返回蛋白质序列及其dna结合位点在序列中的序号（从1开始计数）
 def readPDNA62():
@@ -90,7 +87,7 @@ def readPDNA224():
                             break
     return pdna_seqs_224, pdna_sites_224
 
-def readPDNA543():
+def readPDNA543_seqs_sites():
     from Bio import SeqIO
     train_seqs = {}
     train_sites = {}
@@ -108,6 +105,34 @@ def readPDNA543():
         test_sites[site_record.id] = str(site_record.seq)
     return (train_seqs, train_sites), (test_seqs, test_sites)
 
+def readPDNA543_hhm_sites():    
+    import os
+    from HHSuite import read_hhm
+    from Bio import SeqIO
+    
+    traindir = 'PDNA_Data/PDNA543_hhm'
+    testdir = 'PDNA_Data/PDNA543TEST_hhm'
+    
+    x_train = {}
+    train_sites = {}
+    for file in os.listdir(traindir):
+        r = read_hhm(os.path.join(traindir, file))
+        x_train[file] = r[1]
+        
+    for site_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-543_label.fasta', 'fasta'):
+        train_sites[site_record.id] = str(site_record.seq)
+    
+    x_test = {}
+    test_sites = {}
+    for file in os.listdir(testdir):
+        r = read_hhm(os.path.join(testdir,file))
+        x_test[file] = r[1]
+        
+    for site_record in SeqIO.parse('PDNA_Data/TargetDNA/PDNA-TEST_label.fasta', 'fasta'):
+        test_sites[site_record.id] = str(site_record.seq) 
+        
+    return (x_train, train_sites), (x_test, test_sites) 
+
 """
  对蛋白质序列进行滑窗，生成正样本和负样本。滑窗尺寸为ws，一个氨基酸左右各取ws个氨基酸，
  构成一个长度为2*ws+1的肽链，如果中间的氨基酸是与DNA结合的位点，则该序列为正样本
@@ -122,7 +147,8 @@ Param:
  posseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列
  negseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列   
 """
-def buildBenchmarkDataset2(pseqs:dict, psites:dict, windown_wise:int, npzfile:str):
+def buildBenchmarkDataset2(pseqs:dict, psites:dict, 
+                           windown_wise:int, npzfile:str):
    posseqs, negseqs = list(), list()
    for key in pseqs.keys():
        seq = pseqs[key]
@@ -158,7 +184,8 @@ Param:
  posseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列
  negseqs: list对象，每个元素是长度为2*ws+1的氨基酸序列   
 """    
-def buildBenchmarkDataset(pseqs:dict, psites:dict, windown_wise:int, npzfile):
+def buildBenchmarkDataset(pseqs:dict, psites:dict, 
+                          windown_wise:int, npzfile):
     keys = pseqs.keys()
     posseqs, negseqs = [], []
     for key in keys:
@@ -220,12 +247,13 @@ if __name__ == "__main__":
     #pseqs,psites = readPDNA224()
     #buildBenchmarkDataset(pseqs, psites, 20, 'PDNA_224_20.npz')
     #benchData = np.load('PDNA_224_20.npz')
-    #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')
-    (train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543()
-    buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
-    buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
-    
-    
+    #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')   
+    #buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
+    #buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
+    #(x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
+    (train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
+    buildBenchmarkDataset2(train_seqs, train_sites, 5, 'PDNA_543_train_5.npz')
+    buildBenchmarkDataset2(test_seqs, test_sites, 5, 'PDNA_543_test_5.npz')
     
     
     

@@ -2,3 +2,14 @@ save_models/*.*
 result/
 __pycache__/
 PDNA224_PSSM/
+PDNA_Data/PDNA224_PSSM/
+PDNA_Data/PDNA224_hhm/
+PDNA_Data/PDNA543_hhm/
+PDNA_Data/PDNA543_hhsuite/
+PDNA_Data/PDNA543_PSSM/
+PDNA_Data/PDNA543TEST_hhm/
+PDNA_Data/scope_independent_PSSM/
+PDNA_Data/inputseq.fasta
+PDNA_Data/*.zip
+*.npz
+
