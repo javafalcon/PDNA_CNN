@@ -117,7 +117,7 @@ def lr_schedule(epoch):
     lr = 1e-3
     return lr*0.9*epoch
 
-def train_test(X_train, y_train, X_test, y_test, model, **confParam):
+def train_test(X_train, y_train, X_test, y_test, model, modelFile, **confParam):
     tf.keras.backend.clear_session()
     
     batch_size = confParam['batch_size']
@@ -139,15 +139,15 @@ def train_test(X_train, y_train, X_test, y_test, model, **confParam):
     # callbacks
     log = callbacks.CSVLogger('./result/PDNA-543/log.csv')
         
-    checkpoint = callbacks.ModelCheckpoint('./result/PDNA-543/weights-{epoch:02d}.h5',
-                                           monitor='val_acc',
+    checkpoint = callbacks.ModelCheckpoint(modelFile,
+                                           monitor='val_loss',
                                            save_best_only=True, 
                                            save_weights_only=True, 
                                            verbose=1)
     lr_decay = callbacks.LearningRateScheduler(schedule=lambda epoch: learning_rate * (0.9 ** epoch))
-    #earlystop = callbacks.EarlyStopping(patience=patience)
+    earlystop = callbacks.EarlyStopping(patience=patience, monitor='val_loss')
     
-    cbs=[log,checkpoint,lr_decay]
+    cbs=[log,earlystop,checkpoint,lr_decay]
 
     
     model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, 
@@ -193,12 +193,13 @@ def downsample_ensembler(alpa, **confParam):
         X_train = X_train.reshape(-1,row,col,1)
         y_train = to_categorical(train_y, num_classes=2)
         
+        modelFile = "./result/PDNA-543/weight-{}.h5".format(random_state[i])
         tf.keras.backend.clear_session()
         #model = CnnNet(input_shape=[row,col,1],num_classes=2)
         model = resnet_v1(input_shape=[row,col,1],depth=20, num_classes=2)
         model.summary()
         
-        pred = train_test(X_train, y_train, X_test, y_test, model, **confParam)
+        pred = train_test(X_train, y_train, X_test, y_test, model, modelFile, **confParam)
         y_pred += np.argmax(pred, 1)
                
     y_pred = y_pred/K
