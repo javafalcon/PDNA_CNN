@@ -28,15 +28,15 @@ def pcaval(seqs:list):
     for i in range(len(seqs)):
         seq = seqs[i]
         n = len(seq)
-        t = np.zeros(shape=(n,21))
+        t = np.zeros(shape=(n,16))
         for j in range(n):
             if seq[j] in aadict.keys():
-                t[j,:20] = aadict[seq[j]]
-                t[j,20] = 0
+                t[j,:15] = aadict[seq[j]]
+                t[j,15] = 0
             else:
-                t[j] = np.zeros(21,)
+                t[j] = np.zeros(16,)
                 if seq[j] == '#':
-                    t[j,20] = 1
+                    t[j,15] = 1
         x.append(t)
     return np.array(x)
 
