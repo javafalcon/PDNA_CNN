@@ -244,16 +244,16 @@ def generateKFBenchmarkDataset(posseqs:list, negseqs:list, npzfile, kf=5):
 if __name__ == "__main__":
     #benchData = np.load('PDNA_224_11.npz')
     #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset.npz') 
-    #pseqs,psites = readPDNA224()
-    #buildBenchmarkDataset(pseqs, psites, 20, 'PDNA_224_20.npz')
+    pseqs,psites = readPDNA224()
+    buildBenchmarkDataset(pseqs, psites, 7, 'PDNA_224_7.npz')
     #benchData = np.load('PDNA_224_20.npz')
     #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')   
     #buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
     #buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
     #(x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
-    (train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
-    buildBenchmarkDataset2(train_seqs, train_sites, 7, 'PDNA_543_train_7.npz')
-    buildBenchmarkDataset2(test_seqs, test_sites, 7, 'PDNA_543_test_7.npz')
+    #(train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
+    #buildBenchmarkDataset2(train_seqs, train_sites, 7, 'PDNA_543_train_7.npz')
+    #buildBenchmarkDataset2(test_seqs, test_sites, 7, 'PDNA_543_test_7.npz')
     
     
     
