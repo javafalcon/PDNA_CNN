@@ -7,6 +7,7 @@ Created on Sat May 30 20:16:58 2020
 
 import numpy as np
 import tensorflow as tf
+from tensorflow import keras
 from tensorflow.keras import layers, models
 from resnet import resnet_v1
 from tensorflow.keras.optimizers import Adam
@@ -23,8 +24,6 @@ from configparser import ConfigParser
 from semisupLearner_keras import displayMetrics
 from semisupLearner_keras import SemisupLearner
 
-row, col = 15, 21
-
 def load_downsample_TrainData(df, alpa=1, random_state=None):
     data = np.load(df)#'PDNA_Data\\PDNA_543_train_7.npz'
     train_pos_seqs = data['pos'] 
@@ -40,7 +39,7 @@ def load_downsample_TrainData(df, alpa=1, random_state=None):
 
     return (X_train, y_train)
 
-def load_upsample_TrainData(df, seed):
+def load_upsample_TrainData(df, random_state=None):
     data = np.load(df)#'PDNA_Data\\PDNA_543_train_7.npz'
     train_pos_seqs = data['pos'] 
     train_neg_seqs = data['neg']
@@ -52,13 +51,13 @@ def load_upsample_TrainData(df, seed):
     y_train = np.zeros((len(X_train),))
     y_train[:len(train_pos_X)] = 1.
     
-    ada = ADASYN(random_state=seed)
+    ada = ADASYN(random_state=random_state)
     X_train = X_train.reshape((-1,row*col))
     X_res, y_res = ada.fit_resample(X_train, y_train)
     X_res = X_res.reshape((-1,row,col))
     return (X_res, y_res)
 
-def load_updownsample_TrainData(df, seed, alpa=3):
+def load_updownsample_TrainData(df, alpa=3, random_state=None):
     data = np.load(df)#'PDNA_Data\\PDNA_543_train_7.npz'
     train_pos_seqs = data['pos'] 
     train_neg_seqs = data['neg']
@@ -70,7 +69,7 @@ def load_updownsample_TrainData(df, seed, alpa=3):
     y_train = np.zeros((len(X_train),))
     y_train[:len(train_pos_X)] = 1.
 
-    ada = ADASYN(random_state=seed)
+    ada = ADASYN(random_state=random_state)
     X_train = X_train.reshape((-1,row*col))
     X_res, y_res = ada.fit_resample(X_train, y_train)
     X_res = X_res.reshape((-1,row,col))
@@ -89,12 +88,9 @@ def load_TestData(df):
     
     return (X_test, y_test)
 
-
-
 def CnnNet(input_shape, num_classes):
-    global weight
-    regular = tf.keras.regularizers.l1(0.01)
-    x = layers.Input(shape=input_shape)
+    regular = keras.regularizers.l1(0.01)
+    x = keras.Input(shape=input_shape)
     conv1 = layers.Conv2D(32, (5,5), strides=1,
                           padding='same', activation='relu', 
                           kernel_regularizer=regular,
@@ -122,32 +118,70 @@ def CnnNet(input_shape, num_classes):
     x_b = drop2(x_b)
     flat = layers.Flatten()
     dens1 = layers.Dense(512, activation='relu')
-    drop3 = layers.Dropout(0.5, name="unsupLayer")
+    drop3 = layers.Dropout(0.5)
+    out = layers.Dense(num_classes, activation='softmax', name="unsupLayer")
     
     x_a = flat(x_a)
     x_a = dens1(x_a)
     x_a = drop3(x_a)
+    out_a = out(x_a)
     
     x_b = flat(x_b)
     x_b = dens1(x_b)
     x_b = drop3(x_b)
+    out_b = out(x_b)
     
-    out = layers.Dense(num_classes, activation='softmax')(x_a)
+    return keras.Model(x, [out_a, out_b]) 
+
+def semiNet(input_shape, num_classes):
+    l2value = 0.001
+    regular = tf.keras.regularizers.l1(0.001)
+    x_input = layers.Input(shape=input_shape,name="main_input")
+    conv1 = layers.Conv2D(32,(9,1),padding='same',activation="relu",kernel_regularizer=regular)(x_input) 
+    pool1 = layers.MaxPooling2D(pool_size=(7,1))(conv1)
+    drop1 = layers.Dropout(0.3)
     
-    return models.Model(x, out) 
+    #conv2 = Conv2D(64,(3,3),padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv1)               
+    
+    #conv3 = Conv2D(100,5,padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv2) 
+    
+    #pool1 = MaxPooling2D(2)(conv3)
+    
+    #drop_1 = Dropout(0.3)
+    x_a = drop1(pool1)
+    x_b = drop1(pool1)
+        
+    flatten = layers.Flatten()
+    x_a = flatten(x_a)
+    x_b = flatten(x_b)
+        
+    dense_1 = layers.Dense(100, activation='relu')
+    x_a = dense_1(x_a)
+    x_b = dense_1(x_b)
+    
+    drop_3 = layers.Dropout(0.3, name="unsupLayer")
+    x_a = drop_3(x_a)
+    x_b = drop_3(x_b)
+    
+    out = layers.Dense(num_classes, activation="softmax")(x_a)
+    
+    model = models.Model(inputs=x_input, outputs=[out, x_b])
+    return model
 
 def lr_schedule(epoch):
     lr = 1e-3
     return lr*0.9*epoch
 
+def mylos(o1, o2):
+    return tf.keras.losses.categorical_crossentropy(y_true, y_pred) + tf.keras.losses.mean_squared_error(y_true, y_pred)
 def train_test(X_train, y_train, X_test, y_test, model, modelFile, noteInfo, metricsFile, **confParam):
     tf.keras.backend.clear_session()
     
     ssparam = {}
     ssparam['x_train'] = X_train
-    ssparam['y_train'] = y_train
+    ssparam['y_train'] = [y_train, y_train]
     ssparam['x_vldt'] = X_test
-    ssparam['y_vldt'] = y_test
+    ssparam['y_vldt'] = [y_test, y_test]
     ssparam['batch_size'] = confParam['batch_size']
     ssparam['epochs'] = confParam['epochs']
     ssparam['patience'] = confParam['patience']
@@ -164,6 +198,7 @@ def train_test(X_train, y_train, X_test, y_test, model, modelFile, noteInfo, met
     displayMetrics(y_test, pred_prob, noteInfo, metricsFile)
     return pred_prob
 
+
 def ensemble_train_test(X_trains, y_trains, X_test, y_test, model, K):
     
     y_pred = np.zeros(shape=(y_test.shape[0],))
@@ -179,9 +214,8 @@ def ensemble_train_test(X_trains, y_trains, X_test, y_test, model, K):
     y_pred = (y_pred>0.5).astype(float)    
     return y_pred, ls_pred
 
-def downsample_ensembler(metricsFile, alpa, **confParam):
-    trainFile = 'PDNA_543_train_7.npz'
-    testFile= 'PDNA_543_test_7.npz'
+def downsample_ensembler(trainFile, testFile, metricsFile, K, alpa, **confParam):   
+    row, col = confParam['row'], confParam['col']
     
     (X_test, test_y) = load_TestData(testFile)
     X_test = X_test.reshape(-1,row,col,1)
@@ -190,16 +224,17 @@ def downsample_ensembler(metricsFile, alpa, **confParam):
     y_pred = np.zeros(shape=(test_y.shape[0],))
     ls_pred = []
     
-    random_state = [42,163,1436,57,342,93,3987,1135,198743]
-    K = 9
+    random_state = [42,163,1436,57,342,93,3987,1135,198743]   
+    
     for i in range(K):
         (X_train, train_y) = load_downsample_TrainData(trainFile, alpa, random_state[i])
             
         X_train = X_train.reshape(-1,row,col,1)
         y_train = to_categorical(train_y, num_classes=2)
         
-        tf.keras.backend.clear_session()
+        keras.backend.clear_session()
         model = CnnNet(input_shape=[row,col,1],num_classes=2)
+        #model = semiNet(input_shape=[row,col,1],num_classes=2)
         model.summary()
         
         noteInfo = "Ensemble {}/{} semisuper learners on downsample dataset \
@@ -217,52 +252,48 @@ def downsample_ensembler(metricsFile, alpa, **confParam):
     print('Test mattews-corrcoef', matthews_corrcoef(test_y, y_pred))
     print('Test confusion-matrix', confusion_matrix(test_y, y_pred))   
            
-def updownsample_ensembler():
-    trainFile = 'PDNA_543_train_7.npz'
-    testFile= 'PDNA_543_test_7.npz'
-    
-    K = 1
+def updownsample_ensembler(trainFile, testFile, metricsFile,  K, alpa, **confParam):   
+    row, col = confParam['row'], confParam['col']
     (X_test, test_y) = load_TestData(testFile)
     X_test = X_test.reshape(-1,row,col,1)
     y_test = to_categorical(test_y, num_classes=2)
-    y_pred = np.zeros(shape=(test_y.shape[0],))
     
+    y_pred = np.zeros(shape=(test_y.shape[0],))
+    ls_pred = []
+    
+    random_state = [42,163,1436,57,342,93,3987,1135,198743]   
     
     for i in range(K):
-        (X_train, train_y) = load_updownsample_TrainData(trainFile, seed=42, alpa=3)
+        (X_train, train_y) = load_updownsample_TrainData(trainFile, alpa, random_state[i])
+            
         X_train = X_train.reshape(-1,row,col,1)
         y_train = to_categorical(train_y, num_classes=2)
         
         tf.keras.backend.clear_session()
-        
-        model = resnet_v1(input_shape=[row,col,1],depth=20, num_classes=2)
+        model = CnnNet(input_shape=[row,col,1],num_classes=2)
         model.summary()
         
-        lr_scheduler = LearningRateScheduler(lr_schedule)
-        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5,
-                                       min_lr=0.5e-6)
-        callbacks = [lr_reducer, lr_scheduler]
-        model.compile(loss='categorical_crossentropy',
-                      optimizer=Adam(learning_rate=lr_schedule(0)),
-                      metrics=['accuracy'])
-        model.fit(X_train, y_train, batch_size=100, epochs=20, 
-              validation_data=[X_test, y_test],
-              shuffle=True,
-              callbacks=callbacks)
-        pred = model.predict(X_test)
+        noteInfo = "Ensemble {}/{} semisuper learners on up & downsample dataset \
+                    (Numbers of negative = {} * Numbers of postive".format(i, K, alpa)
+        modelFile = "save_models/ensem_semisup_updownsample_{}.hdf5".format(i)
+        pred = train_test(X_train, y_train, X_test, y_test, model, modelFile, 
+                          noteInfo, metricsFile, **confParam)
+        y_pred += np.argmax(pred, 1)
         
-        y_pred += np.argmax(pred,1)
+        ls_pred.append(y_pred)
         
     y_pred = y_pred/K
     y_pred = (y_pred>0.5).astype(float)
     print('Test Accuracy:', accuracy_score(test_y, y_pred))
     print('Test mattews-corrcoef', matthews_corrcoef(test_y, y_pred))
-    print('Test confusion-matrix', confusion_matrix(test_y, y_pred))
+    print('Test confusion-matrix', confusion_matrix(test_y, y_pred))  
     
 def readConfParam():
     conf = ConfigParser()
     conf.read('conf.ini')
     confParam = {}
+    confParam['row'] = int(conf.get('netparam', 'row'))
+    confParam['col'] = int(conf.get('netparam', 'col'))
     confParam['batch_size'] = int(conf.get('netparam','batch_size'))
     confParam['epochs'] = int(conf.get('netparam', 'epochs'))
     confParam['patience'] = int(conf.get('netparam', 'patience'))
@@ -278,6 +309,8 @@ def readConfParam():
     return confParam
 
 if __name__ == "__main__":
+    trainFile = 'PDNA_543_train_7.npz'
+    testFile= 'PDNA_543_test_7.npz'
     confParam = readConfParam()
     metricsFile = "ensemble_semisup_info.txt"
-    downsample_ensembler(metricsFile, 3, **confParam)
+    downsample_ensembler(trainFile, testFile, metricsFile, 9, 3, **confParam)

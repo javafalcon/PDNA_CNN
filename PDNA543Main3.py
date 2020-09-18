@@ -21,8 +21,6 @@ from imblearn.over_sampling import ADASYN
 
 from configparser import ConfigParser
 
-row, col = 15, 16
-
 def load_downsample_TrainData(df, alpa=1, random_state=None):
     data = np.load(df)#'PDNA_Data\\PDNA_543_train_7.npz'
     train_pos_seqs = data['pos'] 
@@ -38,7 +36,7 @@ def load_downsample_TrainData(df, alpa=1, random_state=None):
 
     return (X_train, y_train)
 
-def load_upsample_TrainData(df, seed):
+def load_upsample_TrainData(df, random_state=None):
     data = np.load(df)#'PDNA_Data\\PDNA_543_train_7.npz'
     train_pos_seqs = data['pos'] 
     train_neg_seqs = data['neg']
@@ -56,7 +54,7 @@ def load_upsample_TrainData(df, seed):
     X_res = X_res.reshape((-1,row,col))
     return (X_res, y_res)
 
-def load_updownsample_TrainData(df, seed, alpa=3):
+def load_updownsample_TrainData(df, alpa=3, seed=random_state):
     data = np.load(df)#'PDNA_Data\\PDNA_543_train_7.npz'
     train_pos_seqs = data['pos'] 
     train_neg_seqs = data['neg']
@@ -68,7 +66,7 @@ def load_updownsample_TrainData(df, seed, alpa=3):
     y_train = np.zeros((len(X_train),))
     y_train[:len(train_pos_X)] = 1.
 
-    ada = ADASYN(random_state=seed)
+    ada = ADASYN(random_state=random_state)
     X_train = X_train.reshape((-1,row*col))
     X_res, y_res = ada.fit_resample(X_train, y_train)
     X_res = X_res.reshape((-1,row,col))
@@ -86,8 +84,6 @@ def load_TestData(df):
     y_test[:len(test_pos_X)] = 1.
     
     return (X_test, y_test)
-
-
 
 def CnnNet(input_shape, n_class):
     regular = tf.keras.regularizers.l1(0.01)
@@ -147,7 +143,7 @@ def train_test(X_train, y_train, X_test, y_test, model, modelFile, **confParam):
     lr_decay = callbacks.LearningRateScheduler(schedule=lambda epoch: learning_rate * (0.9 ** epoch))
     earlystop = callbacks.EarlyStopping(patience=patience, monitor='val_loss')
     
-    cbs=[log,earlystop,checkpoint,lr_decay]
+    cbs=[log,lr_decay]
 
     
     model.fit(X_train, y_train, batch_size=batch_size, epochs=epochs, 
@@ -198,7 +194,8 @@ def downsample_ensembler(alpa, **confParam):
         #model = CnnNet(input_shape=[row,col,1],num_classes=2)
         model = resnet_v1(input_shape=[row,col,1],depth=20, num_classes=2)
         model.summary()
-        
+        #model.load_weights(modelFile)
+        #pred = model.predict(X_test)
         pred = train_test(X_train, y_train, X_test, y_test, model, modelFile, **confParam)
         y_pred += np.argmax(pred, 1)
                
@@ -208,41 +205,31 @@ def downsample_ensembler(alpa, **confParam):
     print('Test mattews-corrcoef', matthews_corrcoef(test_y, y_pred))
     print('Test confusion-matrix', confusion_matrix(test_y, y_pred))   
            
-def updownsample_ensembler():
+def updownsample_ensembler(alpa, **confParam):
     trainFile = 'PDNA_543_train_7.npz'
     testFile= 'PDNA_543_test_7.npz'
     
-    K = 1
+    K = 9
     (X_test, test_y) = load_TestData(testFile)
     X_test = X_test.reshape(-1,row,col,1)
     y_test = to_categorical(test_y, num_classes=2)
     y_pred = np.zeros(shape=(test_y.shape[0],))
     
-    
+    random_state = [42,163,1436,57,342,93,3987,1135,198743]
     for i in range(K):
-        (X_train, train_y) = load_updownsample_TrainData(trainFile, seed=42, alpa=3)
+        (X_train, train_y) = load_updownsample_TrainData(trainFile, seed=random_state[i], alpa=alpa)
         X_train = X_train.reshape(-1,row,col,1)
         y_train = to_categorical(train_y, num_classes=2)
         
+        modelFile = "./result/PDNA-543/updownsample-weight-{}.h5".format(random_state[i])
         tf.keras.backend.clear_session()
-        
+        #model = CnnNet(input_shape=[row,col,1],num_classes=2)
         model = resnet_v1(input_shape=[row,col,1],depth=20, num_classes=2)
         model.summary()
-        
-        lr_scheduler = LearningRateScheduler(lr_schedule)
-        lr_reducer = ReduceLROnPlateau(factor=np.sqrt(0.1), cooldown=0, patience=5,
-                                       min_lr=0.5e-6)
-        callbacks = [lr_reducer, lr_scheduler]
-        model.compile(loss='categorical_crossentropy',
-                      optimizer=Adam(learning_rate=lr_schedule(0)),
-                      metrics=['accuracy'])
-        model.fit(X_train, y_train, batch_size=100, epochs=20, 
-              validation_data=[X_test, y_test],
-              shuffle=True,
-              callbacks=callbacks)
-        pred = model.predict(X_test)
-        
-        y_pred += np.argmax(pred,1)
+        #model.load_weights(modelFile)
+        #pred = model.predict(X_test)
+        pred = train_test(X_train, y_train, X_test, y_test, model, modelFile, **confParam)
+        y_pred += np.argmax(pred, 1)
         
     y_pred = y_pred/K
     y_pred = (y_pred>0.5).astype(float)
@@ -254,21 +241,23 @@ def readConfParam():
     conf = ConfigParser()
     conf.read('conf.ini')
     confParam = {}
+    confParam['row'] = int(conf.get('negparam', 'row'))
+    confParam['col'] = int(conf.get('negparam', 'col'))
     confParam['batch_size'] = int(conf.get('netparam','batch_size'))
     confParam['epochs'] = int(conf.get('netparam', 'epochs'))
     confParam['patience'] = int(conf.get('netparam', 'patience'))
     confParam['learning_rate'] = float(conf.get('netparam', 'learning_rate'))
-    '''
+    
     confParam['rampup_length'] = int(conf.get('semisupparam', 'rampup_length'))
     confParam['rampdown_length'] = int(conf.get('semisupparam', 'rampdown_length'))
     confParam['learning_rate_max'] = float(conf.get('semisupparam', 'learning_rate_max'))
     confParam['scaled_unsup_weight_max'] = int(conf.get('semisupparam', 'scaled_unsup_weight_max'))
     confParam['gammer'] = float(conf.get('semisupparam', 'gammer'))
     confParam['beita'] = float(conf.get('semisupparam', 'beita'))
-    '''
+    
     return confParam
 
 if __name__ == "__main__":
     confParam = readConfParam()
     
-    downsample_ensembler(2, **confParam)
+    updownsample_ensembler(2, **confParam)
