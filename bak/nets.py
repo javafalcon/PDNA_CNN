@@ -21,27 +21,21 @@ from keras.regularizers import l2
 def semiSL2Dnet(shape,num_classes):
     l2value = 0.001
     x_input = Input(shape=shape,name="main_input")
-    conv1 = Conv2D(32,(9,1),padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input) 
-    pool1 = MaxPooling2D(pool_size=(7,1))(conv1)
-    drop1 = Dropout(0.3)
-    
-    #conv2 = Conv2D(64,(3,3),padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv1)               
-    
-    #conv3 = Conv2D(100,5,padding='same',activation="relu",kernel_regularizer=l2(l2value))(conv2) 
-    
-    #pool1 = MaxPooling2D(2)(conv3)
-    
-    #drop_1 = Dropout(0.3)
-    x_a = drop1(pool1)
-    x_b = drop1(pool1)
+    x_input = Input(shape=shape,name="main_input")
+    x1_1 = Conv2D(32,1,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input)
+    x1_2 = Conv2D(32,1,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input)
+    x1_2 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_2)
+    x1_3 = Conv2D(32,1,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x_input)
+    x1_3 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_3)
+    x1_3 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_3)
+    x1_3 = Conv2D(32,3,padding='same',activation="relu",kernel_regularizer=l2(l2value))(x1_3)   
+    x = Concatenate()([x1_1,x1_2,x1_3])
         
-    flatten = Flatten()
-    x_a = flatten(x_a)
-    x_b = flatten(x_b)
-        
+    x = Flatten()(x)
+            
     dense_1 = Dense(100, activation='relu')
-    x_a = dense_1(x_a)
-    x_b = dense_1(x_b)
+    x_a = dense_1(x)
+    x_b = dense_1(x)
     
     drop_3 = Dropout(0.3, name="unsupLayer")
     x_a = drop_3(x_a)
