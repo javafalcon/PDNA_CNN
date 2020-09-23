@@ -27,17 +27,19 @@ def loadHHM():
     
     x_train = np.concatenate((train_pos, train_neg))
     y_train = [1 for _ in range(train_pos.shape[0])] + [0 for _ in range(train_neg.shape[0])]
-    y_train = keras.utils.to_categorical(y_train, num_classes=2)
+    #y_train = keras.utils.to_categorical(y_train, num_classes=2)
     x_train = x_train.reshape(-1, 450)
     ada = ADASYN(random_state=42)
-    x_train_res, y_res = ada.fit_resample(x_train, y_train)
+    x_train_res, y_train_res = ada.fit_resample(x_train, y_train)
     x_train_res = x_train_res.reshape((-1, 15,30))
+    y_train_res = keras.utils.to_categorical(y_train_res, num_classes=2)
     
     x_test = np.concatenate((test_pos, test_neg))
     y_test = [1 for _ in range(test_pos.shape[0])] + [0 for _ in range(test_neg.shape[0])]
     y_test = keras.utils.to_categorical(y_test, num_classes=2)
     
-    return (x_train, y_train), (x_test, y_test)
+    return (x_train_res, y_train_res), (x_test, y_test)
+
 """
 位置函数
     基于角度的位置编码方法。计算位置编码矢量的长度
@@ -250,12 +252,13 @@ params['droprate'] = 0.2
 params['fl_size'] = 128
 params['num_classes'] = 2
 params['epochs'] = 20
-params['batch_size'] = 32
+params['batch_size'] = 200
 
 
 # load data
 (x_train, y_train),(x_test, y_test) = loadHHM()
 
+x_train, y_train = shuffle(x_train, y_train)
 # training and test
 modelfile = './save_models/hhm_trainsformer.h5'
 score = transformer_predictor(x_train, y_train, x_test, y_test, modelfile, params)

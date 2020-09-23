@@ -7,6 +7,7 @@ Created on Wed Sep 16 09:39:12 2020
 import numpy as np
 import re
 import tensorflow as tf
+from tensorflow import keras
 from tensorflow.keras import layers
 from sklearn.utils import shuffle
 from sklearn.model_selection import KFold
@@ -52,7 +53,7 @@ def transformer_train(x_train, y_train, x_test, y_test, n_layers,
     model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
     model.summary()
 
-    history = model.fit(x_train, y_train, batch_size=100, epochs=80, 
+    history = model.fit(x_train, y_train, batch_size=100, epochs=50, 
         validation_split=0.2)
     plot_history(history)
     
@@ -112,14 +113,16 @@ def crosseval(x_pos, x_neg, k, n_layers,
     return y_t, y_p    
 
 
-seqlen = 15
-vocab_size = 23
+seqlen = 31
+vocab_size = 22
 embed_dim = 16  # Embedding size for each token
 num_heads = 4  # Number of attention heads
 ff_dim = 128  # Hidden layer size in feed forward network inside transformer
-n_layers = 4
+n_layers = 8
 drop_rate = 0.2
 
+"""
+# dataset: pdna-224 
 x_pos, x_neg = load_seq_data('PDNA_224_7.npz')
 y_true, y_pred = crosseval(x_pos, x_neg,5, n_layers,
           embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate)
@@ -131,3 +134,18 @@ mcc = metrics.matthews_corrcoef(y_true, y_pred)
 print("cm: ", cm)
 print("accuracy: ", acc)
 print("MCC: ", mcc)
+"""
+# dataset: pdna-543
+x_train_pos, x_train_neg = load_seq_data('PDNA_543_train_15.npz')
+x_train_pos = np.tile(x_train_pos, (14,1))
+x_train = np.concatenate((x_train_pos, x_train_neg))
+y_train = [1 for _ in range(x_train_pos.shape[0])] + [0 for _ in range(x_train_neg.shape[0])]
+y_train = keras.utils.to_categorical(y_train, num_classes=2)
+
+x_test_pos, x_test_neg = load_seq_data('PDNA_543_test_15.npz')
+x_test = np.concatenate((x_test_pos, x_test_neg))
+y_test = [1 for _ in range(x_test_pos.shape[0])] + [0 for _ in range(x_test_neg.shape[0])]
+y_test = keras.utils.to_categorical(y_test, num_classes=2)
+
+transformer_train(x_train, y_train, x_test, y_test, n_layers,
+                      embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate)
