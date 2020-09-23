@@ -17,7 +17,6 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, callbacks
 from tools import displayMetrics, displayMLMetrics, plot_history
-from ncbi import create_padding_pssm_mask
 
 def loadHHM():
     from imblearn.over_sampling import ADASYN
@@ -28,11 +27,11 @@ def loadHHM():
     
     x_train = np.concatenate((train_pos, train_neg))
     y_train = [1 for _ in range(train_pos.shape[0])] + [0 for _ in range(train_neg.shape[0])]
-    y_train = keras.utils.to_categorical(y_train, nuclasses=2)
-    #x_train = x_train.reshape(-1, 450)
-    #ada = ADASYN(random_state=42)
-    #x_train_res, y_res = ada.fit_resample(x_train, y_train)
-    #x_train_res = x_train_res.reshape((-1, 15,30))
+    y_train = keras.utils.to_categorical(y_train, num_classes=2)
+    x_train = x_train.reshape(-1, 450)
+    ada = ADASYN(random_state=42)
+    x_train_res, y_res = ada.fit_resample(x_train, y_train)
+    x_train_res = x_train_res.reshape((-1, 15,30))
     
     x_test = np.concatenate((test_pos, test_neg))
     y_test = [1 for _ in range(test_pos.shape[0])] + [0 for _ in range(test_neg.shape[0])]
@@ -71,8 +70,9 @@ def position_encoding(position, embed_dim):
             pos_encoding[:,i] = np.sin(angel_rads[:,i])
         else:
             pos_encoding[:,i] = np.cos(angel_rads[:,i])
-    pos_encoding = pos_encoding[np.newaxis, ...]
-    return pos_encoding
+    #pos_encoding = pos_encoding[np.newaxis, ...]
+    return tf.cast(pos_encoding, dtype=tf.float32)
+
 
 
 # 自注意力机制
@@ -178,7 +178,7 @@ class Encoder(layers.Layer):
         
         self.n_layers = n_layers
         self.d_model = d_model
-        self.pos_embedding = position_encoding(max_seq_len, d_model)
+        self.pos_embedding = position_encoding(max_seq_len//2, d_model)
         self.encoder_layer = [EncoderLayer(d_model, n_heads, ffd, dropout_rate)
                               for _ in range(n_layers)]
         self.dropout = layers.Dropout(dropout_rate)
@@ -187,6 +187,7 @@ class Encoder(layers.Layer):
         word_emb = tf.cast(inputs, tf.float32)
         #word_emb *= (tf.cast(self.d_model, tf.float32))
         emb = word_emb + self.pos_embedding
+        
         x = self.dropout(emb, training=training)
         for i in range(self.n_layers):
             x = self.encoder_layer[i](x, training, mask)
@@ -251,22 +252,6 @@ params['num_classes'] = 2
 params['epochs'] = 20
 params['batch_size'] = 32
 
-
-def load_pssm(dirname, num_prots=None):
-    listf = os.listdir(dirname)
-    if num_prots is not None:
-        listf = shuffle(listf)
-        listf = listf[:num_prots]
-    num_len_ec = len(listf)
-    
-    pssm = np.ndarray(shape=(num_len_ec, params["maxlen"], 20))
-    mask = np.ndarray(shape=(num_len_ec, params["maxlen"]))
-    for i in range(num_len_ec):
-        x,m = create_padding_pssm_mask(os.path.join(dirname, listf[i]), maxlen=params["maxlen"])
-        pssm[i, :, :] = x
-        mask[i,:] = m
-        
-    return pssm, mask
 
 # load data
 (x_train, y_train),(x_test, y_test) = loadHHM()

@@ -133,6 +133,8 @@ def readPDNA543_hhm_sites():
         
     return (x_train, train_sites), (x_test, test_sites) 
 
+       
+    
 """
  对蛋白质序列进行滑窗，生成正样本和负样本。滑窗尺寸为ws，一个氨基酸左右各取ws个氨基酸，
  构成一个长度为2*ws+1的肽链，如果中间的氨基酸是与DNA结合的位点，则该序列为正样本
