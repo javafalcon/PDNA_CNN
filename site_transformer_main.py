@@ -53,7 +53,7 @@ def transformer_train(x_train, y_train, x_test, y_test, n_layers,
     model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
     model.summary()
 
-    history = model.fit(x_train, y_train, batch_size=100, epochs=50, 
+    history = model.fit(x_train, y_train, batch_size=100, epochs=5, 
         validation_split=0.2)
     plot_history(history)
     
@@ -147,5 +147,6 @@ x_test = np.concatenate((x_test_pos, x_test_neg))
 y_test = [1 for _ in range(x_test_pos.shape[0])] + [0 for _ in range(x_test_neg.shape[0])]
 y_test = keras.utils.to_categorical(y_test, num_classes=2)
 
+x_train, y_train = shuffle(x_train, y_train)
 transformer_train(x_train, y_train, x_test, y_test, n_layers,
                       embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate)
