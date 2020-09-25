@@ -1,0 +1,190 @@
+Ensemble 0/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 1/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 2/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 3/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 4/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 5/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 6/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 7/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 8/11 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 0/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 1/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+41	693
+321	13700
+ACC: 0.931278 
+F1: 0.964313 
+Recall: 0.977106 
+Pre: 0.951852 
+MCC: 0.046329 
+AUC: 0.525114
+ Ensemble 2/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.500000
+ Ensemble 0/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.682123
+ Ensemble 1/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+6	728
+15	14006
+ACC: 0.949644 
+F1: 0.974161 
+Recall: 0.998930 
+Pre: 0.950590 
+MCC: 0.040974 
+AUC: 0.671997
+ Ensemble 2/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+5	729
+9	14012
+ACC: 0.949983 
+F1: 0.974341 
+Recall: 0.999358 
+Pre: 0.950546 
+MCC: 0.043571 
+AUC: 0.668528
+ Ensemble 3/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+0	734
+0	14021
+ACC: 0.950254 
+F1: 0.974493 
+Recall: 1.000000 
+Pre: 0.950254 
+MCC: 0.000000 
+AUC: 0.641172
+ Ensemble 4/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+3	731
+5	14016
+ACC: 0.950119 
+F1: 0.974416 
+Recall: 0.999643 
+Pre: 0.950431 
+MCC: 0.034843 
+AUC: 0.687378
+ Ensemble 5/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+17	717
+205	13816
+ACC: 0.937513 
+F1: 0.967710 
+Recall: 0.985379 
+Pre: 0.950664 
+MCC: 0.015252 
+AUC: 0.690803
+ Ensemble 6/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+19	715
+207	13814
+ACC: 0.937513 
+F1: 0.967706 
+Recall: 0.985236 
+Pre: 0.950788 
+MCC: 0.019690 
+AUC: 0.691969
+ Ensemble 7/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+67	667
+708	13313
+ACC: 0.906811 
+F1: 0.950895 
+Recall: 0.949504 
+Pre: 0.952289 
+MCC: 0.039750 
+AUC: 0.681078
+ Ensemble 8/9 semisuper learners on downsample dataset                     (Numbers of negative = 3 * Numbers of postive
+37	697
+336	13685
+ACC: 0.929990 
+F1: 0.963631 
+Recall: 0.976036 
+Pre: 0.951537 
+MCC: 0.036628 
+AUC: 0.685217
+ 
