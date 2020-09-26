@@ -61,8 +61,8 @@ def transformer_train(x_train, y_train, x_test, y_test, n_layers,
     model = keras.Model(inputs=inputs, outputs=outputs)
     # Train
     # method 1: weight balancing
-    class_weight = {0:1, 1:1}
-    model.compile("adam", "categorical_crossentropy", metrics=["accuracy"], class_weight=class_weight)
+    #class_weight = {0:1, 1:1}
+    model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
     
     # method 2: Focal loss
     #model.compile(loss=[focal_loss], metrics=["accuracy"], optimizer="adam") 
@@ -153,7 +153,7 @@ y_train = [1 for _ in range(x_train_pos.shape[0])] + [0 for _ in range(x_train_n
 print('Original dataset shape %s' % Counter(y_train))
 # under-sampling
 nm = NearMiss()
-X_train_res, y_train_res = nm.fit_resample(x_train, y_train) 
+x_train_res, y_train_res = nm.fit_resample(x_train, y_train) 
 print('Resampled dataset shape %s' % Counter(y_train_res))
 
 y_train_res = keras.utils.to_categorical(y_train_res, num_classes=2)
