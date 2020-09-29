@@ -9,6 +9,7 @@ import numpy as np
 from SeqFormulate import greyPseAAC
 from bls_enhence import broadnet_enhence
 from sklearn import metrics
+from imblearn.over_sampling import ADASYN
 
 def load_data(file):
     data = np.load(file, allow_pickle=True)
@@ -23,10 +24,11 @@ def load_data(file):
     return np.array(x_pos), np.array(x_neg)
 
 x_train_pos, x_train_neg = load_data('PDNA_543_train_7.npz')
-
 x_train = np.concatenate((x_train_pos, x_train_neg))
 y_train = [0 for _ in range(x_train_pos.shape[0])] + [1 for _ in range(x_train_neg.shape[0])]
 y_train = np.array(y_train)
+ada = ADASYN(random_state=43)
+x_train_res, y_train_res = ada.fit_resample(x_train, y_train)
 
 x_test_pos, x_test_neg = load_data('PDNA_543_test_7.npz')
 x_test = np.concatenate((x_test_pos, x_test_neg))
@@ -38,12 +40,12 @@ bls = broadnet_enhence(maptimes = 10,
                            traintimes = 10,
                            map_function = 'tanh',
                            enhence_function = 'sigmoid',
-                           batchsize = 1, 
+                           batchsize = 100, 
                            acc = 1,
                            step = 5,
                            reg = 0.001)
     
-bls.fit(x_train,y_train)
+bls.fit(x_train_res,y_train_res)
 predictlabel = bls.predict(x_test)
 
 cm = metrics.confusion_matrix(y_test, predictlabel)

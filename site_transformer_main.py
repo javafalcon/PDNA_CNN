@@ -7,7 +7,8 @@ Created on Wed Sep 16 09:39:12 2020
 import numpy as np
 import re
 import tensorflow as tf
-from tensorflow import keras as K
+from tensorflow import keras
+from tensorflow.keras import backend as K
 from tensorflow.keras import layers
 from sklearn.utils import shuffle
 from sklearn.model_selection import KFold
@@ -57,19 +58,19 @@ def transformer_train(x_train, y_train, x_test, y_test, n_layers,
     x = layers.Dropout(0.2)(x)
     outputs = layers.Dense(2, activation="softmax")(x)
 
-    model = K.Model(inputs=inputs, outputs=outputs)
+    model = keras.Model(inputs=inputs, outputs=outputs)
     # Train
     # method 1: weight balancing
-    #class_weight = {0:1, 1:14}
-    #model.compile("adam", "categorical_crossentropy", metrics=["accuracy"], class_weight=class_weight)
+    class_weight = {0:1, 1:14}
+    model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
     
     # method 2: Focal loss
-    model.compile(loss=[focal_loss], metrics=["accuracy"], optimizer="adam") 
+    #model.compile(loss=[focal_loss], metrics=["accuracy"], optimizer="adam") 
     
     model.summary()
 
-    history = model.fit(x_train, y_train, batch_size=200, epochs=50, 
-        validation_split=0.2)
+    history = model.fit(x_train, y_train, batch_size=100, epochs=50, 
+        validation_data=(x_test,y_test), class_weight=class_weight)
     plot_history(history)
     
     prediction = model.predict(x_test)
@@ -118,7 +119,7 @@ def crosseval(x_pos, x_neg, k, n_layers,
         y_test = [1 for _ in range(pos_test.shape[0])] + [0 for _ in range(neg_test.shape[0])]
         y_test = tf.keras.utils.to_categorical(y_test, num_classes=2)
         
-        tf.keras.backend.clear_session()
+        K.clear_session()
         pred = transformer_train(x_train, y_train, x_test, y_test, n_layers,
                       embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate)
         
@@ -128,7 +129,7 @@ def crosseval(x_pos, x_neg, k, n_layers,
     return y_t, y_p    
 
 
-seqlen = 31
+seqlen = 15
 vocab_size = 22
 embed_dim = 18  # Embedding size for each token
 num_heads = 6  # Number of attention heads
@@ -144,26 +145,26 @@ y_true, y_pred = crosseval(x_pos, x_neg,5, n_layers,
 
 """
 # dataset: pdna-543
-x_train_pos, x_train_neg = load_seq_data('PDNA_543_train_15.npz')
+x_train_pos, x_train_neg = load_seq_data('PDNA_543_train_7.npz')
 #x_train_pos = np.tile(x_train_pos, (14,1))
 
 x_train = np.concatenate((x_train_pos, x_train_neg))
 y_train = [1 for _ in range(x_train_pos.shape[0])] + [0 for _ in range(x_train_neg.shape[0])]
 print('Original dataset shape %s' % Counter(y_train))
 # under-sampling
-undersample = CondensedNearestNeighbour(random_state=42)
-X_train_res, y_train_res = undersample.fit_resample(x_train, y_train) 
-print('Resampled dataset shape %s' % Counter(y_train_res))
+#undersample = CondensedNearestNeighbour(random_state=42)
+#X_train_res, y_train_res = undersample.fit_resample(x_train, y_train) 
+#print('Resampled dataset shape %s' % Counter(y_train_res))
 
-y_train = K.utils.to_categorical(y_train, num_classes=2)
+y_train = keras.utils.to_categorical(y_train, num_classes=2)
 
-x_test_pos, x_test_neg = load_seq_data('PDNA_543_test_15.npz')
+x_test_pos, x_test_neg = load_seq_data('PDNA_543_test_7.npz')
 x_test = np.concatenate((x_test_pos, x_test_neg))
 y_test = [1 for _ in range(x_test_pos.shape[0])] + [0 for _ in range(x_test_neg.shape[0])]
-y_test = K.utils.to_categorical(y_test, num_classes=2)
+y_test = keras.utils.to_categorical(y_test, num_classes=2)
 
 x_train, y_train = shuffle(x_train, y_train)
-K.backend.clear_session()
+K.clear_session()
 y_pred = transformer_train(x_train, y_train, x_test, y_test, n_layers,
                       embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate)
 y_true = np.argmax(y_test, axis=1)
