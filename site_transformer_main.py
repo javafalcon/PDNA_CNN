@@ -15,7 +15,8 @@ from sklearn.model_selection import KFold
 from sklearn import metrics
 from sites_transformer import Encoder, create_padding_mask
 from tools import plot_history
-from imblearn.under_sampling import RandomUnderSampler
+from imblearn.under_sampling import NearMiss
+from imblearn.over_sampling import SMOTE
 from collections import Counter
 
 # Define our custom loss function
@@ -44,7 +45,7 @@ def load_seq_data(file):
     x_neg = seqs_to_vec(negseqs)
     return x_pos, x_neg
 
-def transformer_train(x_train, y_train, x_test, y_test, n_layers,
+def transformer_train(x_train, y_train, x_weight, x_test, y_test, n_layers,
                       embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate):
     inputs = layers.Input(shape=(seqlen, ))
     encode_padding_mask = create_padding_mask(inputs)
@@ -69,7 +70,7 @@ def transformer_train(x_train, y_train, x_test, y_test, n_layers,
     
     model.summary()
 
-    history = model.fit(x_train, y_train, batch_size=200, epochs=50, 
+    history = model.fit(x_train, y_train, batch_size=100, epochs=50, sample_weight=x_weight,
         validation_split=0.1)
     plot_history(history)
     
@@ -149,33 +150,37 @@ x_train_pos, x_train_neg = load_seq_data('PDNA_543_train_15.npz')
 #x_train_pos = np.tile(x_train_pos, (14,1))
 
 x_train = np.concatenate((x_train_pos, x_train_neg))
-y_train = [1 for _ in range(x_train_pos.shape[0])] + [0 for _ in range(x_train_neg.shape[0])]
-print('Original dataset shape %s' % Counter(y_train))
+y_train = [0 for _ in range(x_train_pos.shape[0])] + [1 for _ in range(x_train_neg.shape[0])]
+x_weight = [20 for _ in range(x_train_pos.shape[0])] + [1 for _ in range(x_train_neg.shape[0])]
+y_train = keras.utils.to_categorical(y_train, num_classes=2)
+x_weight = np.array(x_weight)
+#print('Original dataset shape %s' % Counter(y_train))
 
 # testing data
 x_test_pos, x_test_neg = load_seq_data('PDNA_543_test_15.npz')
 x_test = np.concatenate((x_test_pos, x_test_neg))
-y_test = [1 for _ in range(x_test_pos.shape[0])] + [0 for _ in range(x_test_neg.shape[0])]
+y_test = [0 for _ in range(x_test_pos.shape[0])] + [1 for _ in range(x_test_neg.shape[0])]
 y_test = keras.utils.to_categorical(y_test, num_classes=2)
 
 # ensembling with under-sampling majority class
 y_score = np.zeros(shape=(y_test.shape[0],))
 y_true = np.argmax(y_test, axis=1)
 
-for _ in range(14):
-    rus = RandomUnderSampler()
-    x_train_res, y_train_res = rus.fit_resample(x_train, y_train) 
-    print('Resampled dataset shape %s' % Counter(y_train_res))
+"""
+us = NearMiss()
+x_train_res, y_train_res = us.fit_resample(x_train, y_train) 
+print('Near Miss Under resampled dataset shape %s' % Counter(y_train_res))
 
-    y_train_res = keras.utils.to_categorical(y_train_res, num_classes=2)
+sm = SMOTE(random_state=42)
+x_train_res, y_train_res = sm.fit_resample(x_train, y_train) 
+print('SMOTE over-resampled dataset shape %s' % Counter(y_train_res))
+"""
 
+x_train, y_train, x_weight = shuffle(x_train, y_train, x_weight)
+K.clear_session()
+y_pred = transformer_train(x_train, y_train, x_weight, x_test, y_test, n_layers,
+                  embed_dim, num_heads, ff_dim, seqlen, vocab_size, drop_rate)
 
-    x_train_res, y_train_res = shuffle(x_train_res, y_train_res)
-    K.clear_session()
-    y_score += transformer_train(x_train_res, y_train_res, x_test, y_test, n_layers,
-                      embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate)
-
-y_pred = (y_score > 3).astype(np.float)
 
 # predict performance
 cm = metrics.confusion_matrix(y_true, y_pred)
