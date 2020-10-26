@@ -1,2 +1,2 @@
-model_checkpoint_path: "initial_weights"
-all_model_checkpoint_paths: "initial_weights"
+model_checkpoint_path: "pdna543_hmm_transformer_initial_weights"
+all_model_checkpoint_paths: "pdna543_hmm_transformer_initial_weights"
