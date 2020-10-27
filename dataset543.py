@@ -181,8 +181,8 @@ if __name__ == "__main__":
     (train_hhm, train_seqs, train_sites), (test_hhm, test_seqs, test_sites) = readPDNA543_hhm_seqs_sites()
     #x_pos, x_neg = gen_PDNA543_HHM_accXiaoInfo(train_hhm,train_seqs,train_sites,'PDNA543_hhm_accxiaoinfo_11.npz',11)
     #x_pos, x_neg = gen_PDNA543_HHM_accXiaoInfo(test_hhm,test_seqs,test_sites,'PDNA543TEST_hhm_accxiaoinfo_11.npz',11)
-    train_pos, train_neg = gen_PDNA543_HHM(train_hhm, train_sites,'PDNA543_HHM_11.npz',11)
-    test_pos, test_neg = gen_PDNA543_HHM(test_hhm, test_sites, 'PDNA543TEST_HHM_11.npz',11)
+    train_pos, train_neg = gen_PDNA543_HHM(train_hhm, train_sites,'PDNA543_HHM_15.npz',15)
+    test_pos, test_neg = gen_PDNA543_HHM(test_hhm, test_sites, 'PDNA543TEST_HHM_15.npz',15)
     #from prepareData import slipwindown_v1
     #(train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
     #slipwindown_v1(train_seqs, train_sites, 15, 'PDNA543_seqs_15.npz')

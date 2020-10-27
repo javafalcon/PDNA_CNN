@@ -1,0 +1,82 @@
+
+params['maxlen'] = 23 # Window_size
+params['embed_dim'] = 30 # Embedding size for each token
+params['num_heads'] = 6  # Number of attention heads
+params['ff_dim'] = 64  # Hidden layer size in feed forward network inside transformer
+params['num_blocks'] = 3
+params['droprate'] = 0.2
+params['fl_size'] = 64
+params['num_classes'] = 1
+params['epochs'] = 500
+params['batch_size'] = 100
+threshold= 0.1
+confusion_matrix:
+ [[6007 8014]
+ [  33  701]]
+accuracy: 0.45462555066079297
+MCC: 0.1695572502715958
+AUC: 0.8475416497674664
+
+threshold= 0.2
+confusion_matrix:
+ [[7247 6774]
+ [  46  688]]
+accuracy: 0.5377838021009828
+MCC: 0.19751555420858158
+AUC: 0.8475416497674664
+
+threshold= 0.3
+confusion_matrix:
+ [[9003 5018]
+ [  82  652]]
+accuracy: 0.6543544561165706
+MCC: 0.23707196722655013
+AUC: 0.8475416497674664
+
+threshold= 0.4
+confusion_matrix:
+ [[9667 4354]
+ [ 105  629]]
+accuracy: 0.6977973568281939
+MCC: 0.2512014801154105
+AUC: 0.8475416497674664
+
+threshold= 0.5
+confusion_matrix:
+ [[10875  3146]
+ [  160   574]]
+accuracy: 0.775940359200271
+MCC: 0.2792111370219654
+AUC: 0.8475416497674664
+
+threshold= 0.6
+confusion_matrix:
+ [[11393  2628]
+ [  196   538]]
+accuracy: 0.8086072517790579
+MCC: 0.2889237296588394
+AUC: 0.8475416497674664
+
+threshold= 0.7
+confusion_matrix:
+ [[11876  2145]
+ [  229   505]]
+accuracy: 0.8391053880040664
+MCC: 0.3030450201503684
+AUC: 0.8475416497674664
+
+threshold= 0.8
+confusion_matrix:
+ [[12770  1251]
+ [  355   379]]
+accuracy: 0.8911555404947475
+MCC: 0.2962439787543634
+AUC: 0.8475416497674664
+
+threshold= 0.9
+confusion_matrix:
+ [[13178   843]
+ [  437   297]]
+accuracy: 0.9132497458488648
+MCC: 0.2805276375154229
+AUC: 0.8475416497674664

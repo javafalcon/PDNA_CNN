@@ -375,11 +375,11 @@ def ensemb_transformer_predictor(x_train_ls, y_train_ls, X_test, y_test, modelfi
     return y_/len(x_train_ls)
 # transformer net params
 params = {}
-params['maxlen'] = 15
+params['maxlen'] = 31
 params['embed_dim'] = 30 # Embedding size for each token
 params['num_heads'] = 6  # Number of attention heads
 params['ff_dim'] = 64  # Hidden layer size in feed forward network inside transformer
-params['num_blocks'] = 3
+params['num_blocks'] = 4
 params['droprate'] = 0.2
 params['fl_size'] = 64
 params['num_classes'] = 1
@@ -393,7 +393,7 @@ params['batch_size'] = 100
 #x_train, y_train = shuffle(x_train, y_train)
 
 
-(x_train_ls, y_train_ls), (x_test, y_test) = loadHHM_RUS('PDNA543_HHM_7.npz', 'PDNA543TEST_HHM_7.npz')
+(x_train_ls, y_train_ls), (x_test, y_test) = loadHHM_RUS('PDNA543_HHM_15.npz', 'PDNA543TEST_HHM_15.npz')
 
 # training and test
 modelfile = './save_models/hhm_trainsformer.h5'
@@ -402,6 +402,9 @@ score = ensemb_transformer_predictor(x_train_ls, y_train_ls, x_test, y_test, mod
 
 #pred = np.argmax(score, 1)
 pred = score > 0.5
-displayMetrics(np.argmax(y_test, 1), pred)
+for t in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
+    print("threshold=", t)
+    displayMetrics(y_test, score, threshold=t)
+    print("")
 plot_cm(y_test, score)
 
