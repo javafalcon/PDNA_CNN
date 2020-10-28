@@ -14,14 +14,16 @@ from tensorflow.keras import layers, callbacks
 from tools import displayMetrics, plot_history, plot_cm
 from transformer_v3 import create_padding_mask, Encoder
 from semisupLearner_keras import displayMetrics
-from semisupLearner_keras import sup_loss, SemisupLearner
+from semisupLearner_keras import SemisupLearner
+
+tf.compat.v1.disable_eager_execution() 
 
 METRICS = [
       keras.metrics.TruePositives(name='tp'),
       keras.metrics.FalsePositives(name='fp'),
       keras.metrics.TrueNegatives(name='tn'),
       keras.metrics.FalseNegatives(name='fn'), 
-      keras.metrics.BinaryAccuracy(name='accuracy'),
+      keras.metrics.Accuracy(name='accuracy'),
       keras.metrics.Precision(name='precision'),
       keras.metrics.Recall(name='recall'),
       keras.metrics.AUC(name='auc'),
@@ -62,24 +64,30 @@ def loadHHM_RUS(trainfile, testfile):
     test_pos, test_neg = testdata['pos'], testdata['neg']
     
     x_test = np.concatenate((test_pos, test_neg))
-    y_test = [1 for _ in range(test_pos.shape[0])] + [0 for _ in range(test_neg.shape[0])]
-    y_test = np.array(y_test, dtype=float)
+    y_test = np.zeros((x_test.shape[0], 2))
+    y_test[:test_pos.shape[0], 1] = 1 # positive samples
+    y_test[test_pos.shape[0]:, 0] = 1 # negative samples
+    
     
     # 计算正类样本和负类样本数量：pos-正样本数量；neg-负样本数量
+    k = 7
     pos, neg = train_pos.shape[0], train_neg.shape[0]
-    k = neg // (2*pos)
+    subneg = neg//k
     
     # RUS随机下采样，负样本数量=2*pos
     indices = np.arange(neg)
     np.random.shuffle(indices)
     x_train_ls, y_train_ls = [], []
     for i in range(k):
-        start = i * pos
-        end = (i+1)*pos if (i+1)*pos < neg else neg
+        start = i * subneg
+        end = (i+1)*subneg if i < k-1 else neg
         x_res_neg = train_neg[start:end]
         x_train = np.concatenate((train_pos, x_res_neg))
-        y_train = [1] * pos + [0] * x_res_neg.shape[0]
-        y_train = np.array(y_train, dtype=float)
+        
+        y_train = np.zeros((x_train.shape[0], 2))
+        y_train[:pos, 1] = 1 # positive samples
+        y_train[pos:2*pos, 0] = 1 # negative samples, others (2*pos:end) is unlabeled
+        
         x_train_ls.append(x_train)
         y_train_ls.append(y_train)
     return (x_train_ls, y_train_ls), (x_test, y_test)
@@ -111,18 +119,18 @@ def buildModel(maxlen, embed_dim, num_heads, ff_dim,
     x_b = dense(x_b)
     x_b = drop_2(x_b)
     
-    outputs = layers.Dense(num_classes, activation="sigmoid", bias_initializer=output_bias)(x_a)
+    outputs = layers.Dense(num_classes, activation="softmax", bias_initializer=output_bias, name='output')(x_a)
     
     model = keras.Model(inputs=inputs, outputs=[outputs, x_b])
-    
+    """
     model.compile(
       optimizer=keras.optimizers.Adam(lr=1e-3),
       loss=keras.losses.BinaryCrossentropy(),
-      metrics=metrics)
+      metrics=metrics)"""
     model.summary()
     return model    
 
-def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile, **confParam):
+def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile, confParam):
     # build model
     model = buildModel(confParam['maxlen'], confParam['embed_dim'],
                        confParam['num_heads'], confParam['ff_dim'], 
@@ -133,7 +141,7 @@ def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsF
     
     ssparam={}
     ssparam['x_train'] = x_train
-    ssparam['y_train'] = [y_train, y_train]
+    ssparam['y_train'] = (y_train, y_train)
     ssparam['batch_size'] = confParam['batch_size']
     ssparam['epochs'] = confParam['epochs']
     ssparam['patience'] = confParam['patience'] 
@@ -146,13 +154,13 @@ def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsF
     ssparam['learning_rate'] = confParam['learning_rate']
     
     early_stopping = callbacks.EarlyStopping(
-        monitor='val_auc', 
+        monitor='val_output_loss', 
         verbose=1,
         patience=10,
         mode='max',
         restore_best_weights=True)
     
-    ssl = SemisupLearner(modelFile, model, **ssparam, earlystopping=early_stopping)
+    ssl = SemisupLearner(modelFile, model, ssparam, earlystop=early_stopping)
     # Train net
     ssl.train()
     # predict
@@ -161,7 +169,7 @@ def semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsF
     #displayMetrics(y_test, pred_prob, noteInfo, metricsFile)  
     return pred_prob
 
-def ensemb_transformer_predictor(x_train_ls, y_train_ls, x_test, y_test, **confParams):    
+def ensemb_transformer_predictor(x_train_ls, y_train_ls, x_test, y_test, confParams):    
     modelFile = './save_models/hhm_trainsformer.h5'
     noteInfo = 'HHM-transformer-semisup'
     metricsFile = 'semiup_info_2.txt'
@@ -170,7 +178,7 @@ def ensemb_transformer_predictor(x_train_ls, y_train_ls, x_test, y_test, **confP
         x_train, y_train = shuffle(x_train, y_train)   
         keras.backend.clear_session()
       
-        score = semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile, **confParams)
+        score = semisupLearn(x_train, y_train, x_test, y_test, modelFile, noteInfo, metricsFile, confParams)
 
         y_ += (score[:,0]>0.5)
         
@@ -181,7 +189,7 @@ confParams = readConfParam('transformer-semisup-conf.ini')
 
 (x_train_ls, y_train_ls), (x_test, y_test) = loadHHM_RUS('PDNA543_HHM_15.npz', 'PDNA543TEST_HHM_15.npz')
 
-score = ensemb_transformer_predictor(x_train_ls, y_train_ls, x_test, y_test, **confParams)
+score = ensemb_transformer_predictor(x_train_ls, y_train_ls, x_test, y_test, confParams)
 pred = score > 0.5
 for t in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
     print("threshold=", t)

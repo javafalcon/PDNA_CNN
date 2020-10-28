@@ -65,7 +65,7 @@ def loadHHM_RUS(trainfile, testfile):
     x_train_ls, y_train_ls = [], []
     for i in range(k):
         start = i * pos
-        end = (i+1)*pos if (i+1)*pos < neg else neg
+        end = (i+1)*pos if i < k-1 else neg
         x_res_neg = train_neg[start:end]
         x_train = np.concatenate((train_pos, x_res_neg))
         y_train = [1] * pos + [0] * x_res_neg.shape[0]
@@ -377,11 +377,11 @@ def ensemb_transformer_predictor(x_train_ls, y_train_ls, X_test, y_test, modelfi
 params = {}
 params['maxlen'] = 31
 params['embed_dim'] = 30 # Embedding size for each token
-params['num_heads'] = 6  # Number of attention heads
+params['num_heads'] = 10  # Number of attention heads
 params['ff_dim'] = 64  # Hidden layer size in feed forward network inside transformer
 params['num_blocks'] = 4
-params['droprate'] = 0.2
-params['fl_size'] = 64
+params['droprate'] = 0.5
+params['fl_size'] = 128
 params['num_classes'] = 1
 params['epochs'] = 500
 params['batch_size'] = 100
