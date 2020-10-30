@@ -5,8 +5,7 @@ Created on Tue Sep 22 13:44:55 2020
 @author: lwzjc
 """
 
-
-from Bio import SeqIO
+from collections import Counter
 from sklearn.utils import shuffle
 from sklearn.model_selection import train_test_split
 import re
@@ -16,10 +15,67 @@ import random
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, callbacks
-from tools import displayMetrics, displayMLMetrics, plot_history
+from tools import displayMetrics, displayMLMetrics, plot_history, plot_cm
+#from imblearn.over_sampling import ADASYN
 
-def loadHHM():
-    from imblearn.over_sampling import ADASYN
+METRICS = [
+      keras.metrics.TruePositives(name='tp'),
+      keras.metrics.FalsePositives(name='fp'),
+      keras.metrics.TrueNegatives(name='tn'),
+      keras.metrics.FalseNegatives(name='fn'), 
+      keras.metrics.BinaryAccuracy(name='accuracy'),
+      keras.metrics.Precision(name='precision'),
+      keras.metrics.Recall(name='recall'),
+      keras.metrics.AUC(name='auc'),
+]
+
+def loadHHM(trainfile, testfile):
+    traindata = np.load(trainfile, allow_pickle=True)
+    train_pos, train_neg = traindata['pos'], traindata['neg']
+    testdata = np.load(testfile, allow_pickle=True)
+    test_pos, test_neg = testdata['pos'], testdata['neg']
+    
+    x_train = np.concatenate((train_pos, train_neg))
+    y_train = [1 for _ in range(train_pos.shape[0])] + [0 for _ in range(train_neg.shape[0])]
+    y_train = np.array(y_train, dtype=float)
+    
+    x_test = np.concatenate((test_pos, test_neg))
+    y_test = [1 for _ in range(test_pos.shape[0])] + [0 for _ in range(test_neg.shape[0])]
+    y_test = np.array(y_test, dtype=float)
+    
+    return (x_train, y_train), (x_test, y_test)
+
+def loadHHM_RUS(trainfile, testfile):
+    traindata = np.load(trainfile, allow_pickle=True)
+    train_pos, train_neg = traindata['pos'], traindata['neg']
+    testdata = np.load(testfile, allow_pickle=True)
+    test_pos, test_neg = testdata['pos'], testdata['neg']
+    
+    x_test = np.concatenate((test_pos, test_neg))
+    y_test = [1 for _ in range(test_pos.shape[0])] + [0 for _ in range(test_neg.shape[0])]
+    y_test = np.array(y_test, dtype=float)
+    
+    # 计算正类样本和负类样本数量
+    pos, neg = train_pos.shape[0], train_neg.shape[0]
+    k = neg // pos
+    
+    # RUS随机下采样
+    indices = np.arange(neg)
+    np.random.shuffle(indices)
+    x_train_ls, y_train_ls = [], []
+    for i in range(k):
+        start = i * pos
+        end = (i+1)*pos if i < k-1 else neg
+        x_res_neg = train_neg[start:end]
+        x_train = np.concatenate((train_pos, x_res_neg))
+        y_train = [1] * pos + [0] * x_res_neg.shape[0]
+        y_train = np.array(y_train, dtype=float)
+        x_train_ls.append(x_train)
+        y_train_ls.append(y_train)
+    return (x_train_ls, y_train_ls), (x_test, y_test)
+        
+"""
+def loadHHM_oversampling():
     traindata = np.load('PDNA543_HHM_7.npz', allow_pickle=True)
     train_pos, train_neg = traindata['pos'], traindata['neg']
     testdata = np.load('PDNA543TEST_HHM_7.npz', allow_pickle=True)
@@ -39,7 +95,7 @@ def loadHHM():
     y_test = keras.utils.to_categorical(y_test, num_classes=2)
     
     return (x_train_res, y_train_res), (x_test, y_test)
-
+"""
 """
 位置函数
     基于角度的位置编码方法。计算位置编码矢量的长度
@@ -75,7 +131,12 @@ def position_encoding(position, embed_dim):
     #pos_encoding = pos_encoding[np.newaxis, ...]
     return tf.cast(pos_encoding, dtype=tf.float32)
 
-
+# 将padding位mark，原来为0的padding项的mark输出为1
+def create_padding_mask(x):
+    # 获取为0的padding项
+    seq = tf.cast(tf.math.equal(tf.reduce_sum(x, axis=-1), 0), tf.float32)
+    # 扩充维度以便用于attention矩阵
+    return seq[:, np.newaxis, np.newaxis, :] # (batch_size, 1, 1, seq_len)
 
 # 自注意力机制
 def scaled_dot_product_attention(q, k, v, mask=None):
@@ -177,10 +238,10 @@ class Encoder(layers.Layer):
     def __init__(self, n_layers, d_model, n_heads, ffd,
                  max_seq_len, dropout_rate=0.1):
         super(Encoder, self).__init__()
-        
+        self.seq_len = max_seq_len
         self.n_layers = n_layers
         self.d_model = d_model
-        self.pos_embedding = position_encoding(max_seq_len//2, d_model)
+        self.pos_emb = layers.Embedding(max_seq_len, d_model)
         self.encoder_layer = [EncoderLayer(d_model, n_heads, ffd, dropout_rate)
                               for _ in range(n_layers)]
         self.dropout = layers.Dropout(dropout_rate)
@@ -188,7 +249,9 @@ class Encoder(layers.Layer):
     def call(self, inputs, training, mask=None):
         word_emb = tf.cast(inputs, tf.float32)
         #word_emb *= (tf.cast(self.d_model, tf.float32))
-        emb = word_emb + self.pos_embedding
+        positions = tf.range(start=0, limit=self.seq_len, delta=1)
+        positions = self.pos_emb(positions)
+        emb = word_emb + positions
         
         x = self.dropout(emb, training=training)
         for i in range(self.n_layers):
@@ -196,42 +259,73 @@ class Encoder(layers.Layer):
         return x
     
 def buildModel(maxlen, embed_dim, num_heads, ff_dim, 
-               num_blocks, droprate, fl_size, num_classes):
+               num_blocks, droprate, fl_size, 
+               num_classes, metrics=METRICS, output_bias=None):
+    if output_bias is not None:
+        output_bias = tf.keras.initializers.Constant(output_bias)
+        
     inputs = layers.Input(shape=(maxlen,30))
-    
+    mask = create_padding_mask(inputs)
     encoder = Encoder(n_layers=num_blocks, d_model=embed_dim, n_heads=num_heads, 
                       ffd=ff_dim, max_seq_len=maxlen, dropout_rate=droprate)
-    x = encoder(inputs, True)
+    x = encoder(inputs, True, mask)
     
     x = layers.GlobalMaxPooling1D()(x)
     x = layers.Dropout(droprate)(x)
     x = layers.Dense(fl_size, activation="relu")(x)
     x = layers.Dropout(droprate)(x)
     
-    outputs = layers.Dense(num_classes, activation="softmax")(x)
+    outputs = layers.Dense(num_classes, activation="sigmoid", bias_initializer=output_bias)(x)
     
     model = keras.Model(inputs=inputs, outputs=outputs)
     
-    model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
+    model.compile(
+      optimizer=keras.optimizers.Adam(lr=1e-3),
+      loss=keras.losses.BinaryCrossentropy(),
+      metrics=metrics)
+    
     return model    
 
 def transformer_predictor(X_train, y_train, X_test, y_test, modelfile, params):
     keras.backend.clear_session()
+    # 计算初始权重
+    c = Counter(y_train)
+    pos, neg = c[1], c[0]
+    total = pos + neg
+    initial_bias = np.log([pos/neg])
+    
+    # 计算类权重
+    weight_for_0 = (1 / neg)*(total)/2.0 
+    weight_for_1 = (1 / pos)*(total)/2.0
 
+    class_weight = {0: weight_for_0, 1: weight_for_1}
+    
     model = buildModel(params['maxlen'], params['embed_dim'], 
-                    params['num_heads'], params['ff_dim'],  params['num_blocks'], 
-                    params['droprate'], params['fl_size'], params['num_classes'])
+                    params['num_heads'], params['ff_dim'],  
+                    params['num_blocks'], params['droprate'],
+                    params['fl_size'], params['num_classes'],
+                    output_bias=initial_bias)
+    model.save_weights('save_models/pdna543_hmm_transformer_initial_weights')
+    
     model.summary()
 
     checkpoint = callbacks.ModelCheckpoint(modelfile, monitor='val_loss',
                                        save_best_only=True, 
                                        save_weights_only=True, 
                                        verbose=1)
+    early_stopping = callbacks.EarlyStopping(
+        monitor='val_auc', 
+        verbose=1,
+        patience=10,
+        mode='max',
+        restore_best_weights=True)
+    
     history = model.fit(
         X_train, y_train, 
         batch_size=params['batch_size'], epochs=params['epochs'], 
         validation_data=(X_test, y_test),
-        callbacks=[checkpoint]
+        callbacks=[checkpoint, early_stopping],
+        class_weight=class_weight
         )
 
     plot_history(history)
@@ -241,28 +335,76 @@ def transformer_predictor(X_train, y_train, X_test, y_test, modelfile, params):
     
     return score
 
+def ensemb_transformer_predictor(x_train_ls, y_train_ls, X_test, y_test, modelfile, params):
+    
+    """checkpoint = callbacks.ModelCheckpoint(modelfile, monitor='val_loss',
+                                           save_best_only=True, 
+                                           save_weights_only=True, 
+                                           verbose=1)"""
+    early_stopping = callbacks.EarlyStopping(
+            monitor='val_auc', 
+            verbose=1,
+            patience=10,
+            mode='max',
+            restore_best_weights=True)
+    
+    y_ = np.zeros((x_test.shape[0],))
+    for x_train, y_train in zip(x_train_ls, y_train_ls): 
+        x_train, y_train = shuffle(x_train, y_train)   
+        keras.backend.clear_session()
+      
+        model = buildModel(params['maxlen'], params['embed_dim'], 
+                    params['num_heads'], params['ff_dim'],  
+                    params['num_blocks'], params['droprate'],
+                    params['fl_size'], params['num_classes'],
+                    )
+        model.summary()
+        
+        history = model.fit(
+            x_train, y_train, 
+            batch_size=params['batch_size'], epochs=params['epochs'], 
+            validation_data=(X_test, y_test),
+            callbacks=[early_stopping]
+            )
+
+        plot_history(history)
+        
+        score = model.predict(X_test)
+        y_ += (score[:,0]>0.5)
+        
+    return y_/len(x_train_ls)
 # transformer net params
 params = {}
-params['maxlen'] = 15
+params['maxlen'] = 31
 params['embed_dim'] = 30 # Embedding size for each token
-params['num_heads'] = 6  # Number of attention heads
-params['ff_dim'] = 128  # Hidden layer size in feed forward network inside transformer
-params['num_blocks'] = 12
-params['droprate'] = 0.2
+params['num_heads'] = 10  # Number of attention heads
+params['ff_dim'] = 64  # Hidden layer size in feed forward network inside transformer
+params['num_blocks'] = 4
+params['droprate'] = 0.5
 params['fl_size'] = 128
-params['num_classes'] = 2
-params['epochs'] = 20
-params['batch_size'] = 200
+params['num_classes'] = 1
+params['epochs'] = 500
+params['batch_size'] = 100
 
 
 # load data
-(x_train, y_train),(x_test, y_test) = loadHHM()
+#(x_train, y_train),(x_test, y_test) = loadHHM('PDNA543_HHM_7.npz', 'PDNA543TEST_HHM_7.npz')
 
-x_train, y_train = shuffle(x_train, y_train)
+#x_train, y_train = shuffle(x_train, y_train)
+
+
+(x_train_ls, y_train_ls), (x_test, y_test) = loadHHM_RUS('PDNA543_HHM_15.npz', 'PDNA543TEST_HHM_15.npz')
+
 # training and test
 modelfile = './save_models/hhm_trainsformer.h5'
-score = transformer_predictor(x_train, y_train, x_test, y_test, modelfile, params)
-pred = np.argmax(score, 1)
-displayMetrics(np.argmax(y_test, 1), pred)
+#score = transformer_predictor(x_train, y_train, x_test, y_test, modelfile, params)
+score = ensemb_transformer_predictor(x_train_ls, y_train_ls, x_test, y_test, modelfile, params)
 
+#pred = np.argmax(score, 1)
+pred = score > 0.5
+for t in [0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9]:
+    print("threshold=", t)
+    displayMetrics(y_test, score, threshold=t)
+    print("")
+plot_cm(y_test, score)
 

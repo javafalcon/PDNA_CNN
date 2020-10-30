@@ -12,6 +12,14 @@ from sklearn.utils import class_weight, shuffle
 from sklearn import metrics
 from tensorflow import keras
 from tensorflow.keras import layers, callbacks
+from sites_transformer import Encoder, create_padding_mask
+
+METRICS = [
+    keras.metrics.BinaryAccuracy(name='accuracy'),
+    keras.metrics.Precision(name='precision'),
+    keras.metrics.Recall(name='recall'),
+    keras.metrics.AUC(name='auc')
+    ]
 
 def plot_history(history):
     import matplotlib.pyplot as plt
@@ -45,7 +53,7 @@ def plot_history(history):
     plt.show()
     
 # prepare data
-def load_data(n_splits=10):
+def load_cross_data(n_splits=10):
     data = np.load('PDNA_543_train_7.npz')
     train_pos_seqs = data['pos'] 
     train_neg_seqs = data['neg']
@@ -113,15 +121,19 @@ def load_data(n_splits=10):
         y_vals.append(y_v)
     return (x_trains, y_trains), (x_vals, y_vals), (x_test, y_test)
 
-def buildModel(maxlen, vocab_size, embed_dim, num_heads, ff_dim, 
-               num_blocks, droprate, fl_size, num_classes):
-    from nlp_transformer import Encoder, create_padding_mask
-    inputs = layers.Input(shape=(maxlen,))
+    
+def buildModel(maxlen, embed_dim, num_heads, ff_dim, 
+               num_blocks, droprate, fl_size, num_classes=1,
+               metrics=METRICS, output_bias=None):
+    if output_bias is not None:
+        output_bias = keras.initializers.Constant(output_bias)
+        
+    inputs = layers.Input(shape=(maxlen,30))
     
     encode_padding_mask = create_padding_mask(inputs)
     encoder = Encoder(n_layers=num_blocks, d_model=embed_dim, n_heads=num_heads, 
-                      ffd=ff_dim, input_vocab_size=vocab_size, 
-                      max_seq_len=maxlen, dropout_rate=droprate)
+                      ffd=ff_dim, seq_len=maxlen, dropout_rate=droprate)
+     
     x = encoder(inputs, False, encode_padding_mask)
     
     x = layers.GlobalMaxPooling1D()(x)
@@ -129,25 +141,30 @@ def buildModel(maxlen, vocab_size, embed_dim, num_heads, ff_dim,
     x = layers.Dense(fl_size, activation="relu")(x)
     x = layers.Dropout(droprate)(x)
     
-    outputs = layers.Dense(num_classes, activation="softmax")(x)
+    outputs = layers.Dense(num_classes, activation="sigmoid", bias_initializer=output_bias)(x)
     
     model = keras.Model(inputs=inputs, outputs=outputs)
     
-    model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
+    model.compile("adam", "binary_crossentropy", metrics=metrics)
     return model
-def transformer_predictor(model, X_train, y_train, X_test, y_test, modelfile, params):
-    keras.backend.clear_session()
+
+def transformer_predictor(model, X_train, y_train, X_test, y_test, modelfile, batch_size, epochs):
+    #keras.backend.clear_session()
 
 
     checkpoint = callbacks.ModelCheckpoint(modelfile, monitor='val_loss',
                                        save_best_only=True, 
                                        save_weights_only=True, 
                                        verbose=1)
+    early_stopping = keras.callbacks.EarlyStopping(
+        monitor='val_auc', verbose=1, patience=10, mode='max', restore_best_weights=True
+        ) 
+                                 
     history = model.fit(
         X_train, y_train, 
-        batch_size=params['batch_size'], epochs=params['epochs'], 
+        batch_size='batch_size', epochs='epochs', 
         validation_data=(X_test, y_test),
-        callbacks=[checkpoint]
+        callbacks=[checkpoint, early_stopping]
         )
 
     plot_history(history)
@@ -217,9 +234,10 @@ def displayMetrics(y_test, y_score, threshold=0.5):
     auc = metrics.roc_auc_score(y_test, y_score)
     print("AUC:", auc)
 
-    
+"""   
 n_splits = 10
 (x_trains, y_trains), (x_vals, y_vals), (x_test, y_test) = load_data(n_splits)
+"""
 """
 #params = {'vocab_size' : 21, 'maxlen' : 15, 'embed_dim' : 15,
 #          'num_heads' : 3,   'ff_dim' : 32, 'drop_rate' : 0.1}
@@ -242,21 +260,60 @@ for i in range(n_splits):
     score = np.concatenate([score, y_score[:,0]])
 
 print("10-Folds cross-validation result: \n")
-displayMetrics(y_true, score)   
+displayMetrics(y_true, score) 
+"""  
 """
 # transformer net params
 params = {}
 params['vocab_size'] = 21
-params['maxlen'] = 15
+params['maxlen'] = 31
 params['embed_dim'] = 20 # Embedding size for each token
 params['num_heads'] = 5  # Number of attention heads
 params['ff_dim'] = 128  # Hidden layer size in feed forward network inside transformer
 params['num_blocks'] = 8
 params['droprate'] = 0.2
 params['fl_size'] = 64
-params['num_classes'] = 2
-params['epochs'] = 10
+params['num_classes'] = 1
+params['epochs'] = 500
 params['batch_size'] = 100
+"""
+
+# load dataset and initial networks weights
+traindata = np.load('PDNA543_HHM_11.npz', allow_pickle=True)
+x_pos_trains, x_neg_trains = traindata['pos'], traindata['neg']
+
+testdata = np.load('PDNA543TEST_HHM_11.npz', allow_pickle=True)
+x_pos_tests, x_neg_tests = testdata['pos'], testdata['neg']
+
+pos, neg = x_pos_trains.shape[0], x_neg_trains.shape[0]
+total = pos + neg
+initial_bias = np.log([pos / neg])
+
+model = buildModel(maxlen=23, embed_dim=30, num_heads=5, 
+                    ff_dim=128, num_blocks=3, droprate=0.2, fl_size=64, 
+                    num_classes=1, metrics=METRICS, output_bias=initial_bias)
+initial_weights = "pdna543_transformer_inital_weights"
+model.save_weights(initial_weights)
+
+# calculate class weights
+weight_for_0 = (1 / neg) * (total)/2.0
+weight_for_1 = (1 / pos) * (total)/2.0
+classWeight = {0: weight_for_0, 1: weight_for_1}
+
+x_trains = np.concatenate((x_pos_trains, x_neg_trains))
+y_trains = [1] * pos + [0] * neg
+x_trains, y_trains = shuffle(x_trains, y_trains)
+
+x_tests = np.concatenate((x_pos_tests, x_neg_tests))
+y_tests = [1] * x_pos_tests.shape[0] + [0] * x_neg_tests.shape[0]
+
+weighted_model = buildModel(maxlen=23, vocab_size=30, embed_dim=30, num_heads=5, 
+                    ff_dim=128, num_blocks=3, droprate=0.2, fl_size=64)
+weighted_model.load_weights(initial_weights)
+
+transformer_predictor(weighted_model, x_trains, y_trains, x_tests, y_tests, 
+                      'pdna543_weighted_transformer_model', 100, 500)
+"""
 y_true = np.zeros(shape=(0,))
 score = np.zeros(shape=(0,))
 for i in range(n_splits):
@@ -279,4 +336,4 @@ for i in range(n_splits):
 
 print("10-Folds cross-validation result: \n")
 displayMetrics(y_true, score)   
-   
+"""   

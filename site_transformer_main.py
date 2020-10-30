@@ -63,6 +63,7 @@ def transformer_train(x_train, y_train, x_weight, x_test, y_test, n_layers,
     # Train
     # method 1: weight balancing
     #class_weight = {0:1, 1:1}
+
     model.compile("adam", "categorical_crossentropy", metrics=["accuracy"])
     
     # method 2: Focal loss
@@ -70,8 +71,10 @@ def transformer_train(x_train, y_train, x_weight, x_test, y_test, n_layers,
     
     model.summary()
 
+
     history = model.fit(x_train, y_train, batch_size=100, epochs=50, sample_weight=x_weight,
         validation_split=0.1)
+
     plot_history(history)
     
     prediction = model.predict(x_test)
@@ -120,7 +123,7 @@ def crosseval(x_pos, x_neg, k, n_layers,
         y_test = [1 for _ in range(pos_test.shape[0])] + [0 for _ in range(neg_test.shape[0])]
         y_test = tf.keras.utils.to_categorical(y_test, num_classes=2)
         
-        tf.keras.backend.clear_session()
+        K.clear_session()
         pred = transformer_train(x_train, y_train, x_test, y_test, n_layers,
                       embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate)
         
@@ -130,7 +133,7 @@ def crosseval(x_pos, x_neg, k, n_layers,
     return y_t, y_p    
 
 
-seqlen = 31
+seqlen = 15
 vocab_size = 22
 embed_dim = 18  # Embedding size for each token
 num_heads = 6  # Number of attention heads
@@ -146,7 +149,7 @@ y_true, y_pred = crosseval(x_pos, x_neg,5, n_layers,
 
 """
 # dataset: pdna-543
-x_train_pos, x_train_neg = load_seq_data('PDNA_543_train_15.npz')
+x_train_pos, x_train_neg = load_seq_data('PDNA_543_train_7.npz')
 #x_train_pos = np.tile(x_train_pos, (14,1))
 
 x_train = np.concatenate((x_train_pos, x_train_neg))
@@ -156,11 +159,25 @@ y_train = keras.utils.to_categorical(y_train, num_classes=2)
 x_weight = np.array(x_weight)
 #print('Original dataset shape %s' % Counter(y_train))
 
+# under-sampling
+#undersample = CondensedNearestNeighbour(random_state=42)
+#X_train_res, y_train_res = undersample.fit_resample(x_train, y_train) 
+#print('Resampled dataset shape %s' % Counter(y_train_res))
+
+y_train = keras.utils.to_categorical(y_train, num_classes=2)
+
+x_test_pos, x_test_neg = load_seq_data('PDNA_543_test_7.npz')
+
+
 # testing data
-x_test_pos, x_test_neg = load_seq_data('PDNA_543_test_15.npz')
 x_test = np.concatenate((x_test_pos, x_test_neg))
 y_test = [0 for _ in range(x_test_pos.shape[0])] + [1 for _ in range(x_test_neg.shape[0])]
 y_test = keras.utils.to_categorical(y_test, num_classes=2)
+
+x_train, y_train = shuffle(x_train, y_train)
+K.clear_session()
+#y_pred = transformer_train(x_train, y_train, x_test, y_test, n_layers,
+#                      embed_dim, num_heads, ff_dim, seqlen, vocab_size,drop_rate)
 
 # ensembling with under-sampling majority class
 y_score = np.zeros(shape=(y_test.shape[0],))

@@ -253,9 +253,9 @@ if __name__ == "__main__":
     #buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
     #buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
     #(x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
-    (train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
-    buildBenchmarkDataset2(train_seqs, train_sites, 15, 'PDNA_543_train_15.npz')
-    buildBenchmarkDataset2(test_seqs, test_sites, 15, 'PDNA_543_test_15.npz')
-    
+    #(train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
+    #buildBenchmarkDataset2(train_seqs, train_sites, 15, 'PDNA_543_train_15.npz')
+    #buildBenchmarkDataset2(test_seqs, test_sites, 15, 'PDNA_543_test_15.npz')
+    (x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
     
     
