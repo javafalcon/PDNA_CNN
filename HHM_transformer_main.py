@@ -377,11 +377,11 @@ def ensemb_transformer_predictor(x_train_ls, y_train_ls, X_test, y_test, modelfi
 params = {}
 params['maxlen'] = 31
 params['embed_dim'] = 30 # Embedding size for each token
-params['num_heads'] = 10  # Number of attention heads
+params['num_heads'] = 3  # Number of attention heads
 params['ff_dim'] = 64  # Hidden layer size in feed forward network inside transformer
-params['num_blocks'] = 4
-params['droprate'] = 0.5
-params['fl_size'] = 128
+params['num_blocks'] = 3
+params['droprate'] = 0.25
+params['fl_size'] = 32
 params['num_classes'] = 1
 params['epochs'] = 500
 params['batch_size'] = 100
