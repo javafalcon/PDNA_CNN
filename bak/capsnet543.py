@@ -5,11 +5,12 @@ Created on Wed Jan  8 20:42:03 2020
 @author: lwzjc
 """
 import numpy as np
-from keras import layers, models, optimizers
-from keras import backend as K
+from tensorflow.keras import layers, models, optimizers
+from tensorflow.keras import backend as K
 import tensorflow as tf
+from tensorflow.keras import callbacks
 #from keras.utils import to_categorical
-from capsulelayers import CapsuleLayer, PrimaryCap, Length, Mask
+from Capsule import CapsuleLayer, PrimaryCap, Length, Mask
 from sklearn.metrics import accuracy_score, matthews_corrcoef,confusion_matrix
 from sklearn.utils import class_weight, shuffle, resample
 
@@ -51,8 +52,8 @@ def CapsNet(input_shape, n_class, num_routing, kernel_size=7):
 def semisup_margin_loss(y_true, y_pred):  
     m = K.sum(y_true, axis=-1)
     #return  K.switch(K.equal(K.sum(y_true), 0), 0., K.sum(K.categorical_crossentropy(K.tf.boolean_mask(y_true,m), K.tf.boolean_mask(y_pred,m), from_logits=True)) / K.sum(y_true))
-    t = K.tf.boolean_mask(y_true,m)
-    p = K.tf.boolean_mask(y_pred,m)
+    t = tf.boolean_mask(y_true,m)
+    p = tf.boolean_mask(y_pred,m)
     L = t * K.square(K.maximum(0.,0.9 - p)) + \
         0.5 * (1 - t) * K.square(K.maximum(0., p - 0.1))
     return  K.switch(K.equal(K.sum(y_true), 0), 0., K.mean(K.sum(L, 1)))
@@ -268,7 +269,6 @@ if __name__ == "__main__":
     #import numpy as np
     import os
     #from keras.preprocessing.image import ImageDataGenerator
-    from keras import callbacks
     #from keras.utils.vis_utils import plot_model
 
     # setting the hyper parameters
@@ -291,8 +291,8 @@ if __name__ == "__main__":
         
     # load data
     #(x_train, y_train), (x_test, y_test) = load_PDNA543_hhm()
-    traindatafile = 'PDNA543_HHM_11.npz'
-    testdatafile = 'PDNA543TEST_HHM_11.npz'    
+    traindatafile = '../PDNA543_HHM_11.npz'
+    testdatafile = '../PDNA543TEST_HHM_11.npz'    
     N = 9345*4
     (x_train, y_train) = load_semisupTrain(traindatafile,N)
     (x_test, y_test) = load_test(testdatafile)
