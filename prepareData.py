@@ -252,10 +252,11 @@ if __name__ == "__main__":
     #generateKFBenchmarkDataset(benchData['pos'], benchData['neg'], 'KfBenchmarkDataset_20.npz')   
     #buildBenchmarkDataset2(train_seqs, train_sites, 10, 'PDNA_543_train_10.npz')
     #buildBenchmarkDataset2(test_seqs, test_sites, 10, 'PDNA_543_test_10.npz')
-    #(x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
-    #(train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
-    #buildBenchmarkDataset2(train_seqs, train_sites, 15, 'PDNA_543_train_15.npz')
-    #buildBenchmarkDataset2(test_seqs, test_sites, 15, 'PDNA_543_test_15.npz')
     (x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
+    #(train_seqs, train_sites), (test_seqs, test_sites) = readPDNA543_seqs_sites()
+    buildBenchmarkDataset2(x_train, train_sites, 11, 'PDNA543_HMM_11.npz')
+    #buildBenchmarkDataset2(test_seqs, test_sites, 15, 'PDNA_543_test_15.npz')
+    #(x_train, train_sites), (x_test, test_sites) = readPDNA543_hhm_sites()
+    
     
     
