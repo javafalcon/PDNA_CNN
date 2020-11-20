@@ -64,7 +64,7 @@ if __name__ == "__main__":
     x_train_pos, x_train_neg = data['pos'], data['neg']
     
     num_pos, num_neg = x_train_pos.shape[0], x_train_neg.shape[0]
-    R = np.floor( num_neg / num_pos)
+    R = int(np.floor( num_neg / num_pos))
     x_train_neg = shuffle(x_train_neg)
     
     y_pred = np.zeros(shape=(y_test.shape[0],))
