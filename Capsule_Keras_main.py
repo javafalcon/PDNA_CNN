@@ -95,7 +95,7 @@ if __name__ == "__main__":
         model = CapsNet()
         
         model.fit(datagen.flow(x_train, y_train, batch_size=50),
-          epochs=1,
+          epochs=10,
           verbose=1,
           validation_data=(x_val, y_val))
         
